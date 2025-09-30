@@ -1,23 +1,23 @@
--- Script: Noclip, Velocidad Aumentada e Invisibilidad (Toggle)
--- DEBE ser un SOLO LocalScript ubicado en StarterGui o StarterPlayerScripts.
+-- Script: Noclip, Velocidad e Invisibilidad (OP)
+-- UBICACIÓN CORRECTA: LocalScript DENTRO de StarterGui
 
--- Servicios
+-- Servicios (ESTO SIEMPRE VA DE PRIMERAS)
 local Player = game.Players.LocalPlayer
 local UIS = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
 
--- Variables de Estado y Configuración
-local isEnabled = false
-local defaultWalkSpeed = 16 
-local boostedWalkSpeed = 50 -- Velocidad aumentada
-local maxTransparency = 0.85 -- Nivel de invisibilidad (1.0 es totalmente invisible)
+-- ===================================================
+-- 1. INSTANCIAS Y PROPIEDADES DE LA GUI (AHORA DE PRIMERAS)
+-- ===================================================
 
--- 1. INSTANCIAS: Creación de la GUI
+-- 1A. Creación de las instancias
 local ScreenGui = Instance.new("ScreenGui")
 local TextButton = Instance.new("TextButton")
 local UICorner = Instance.new("UICorner")
 local TextLabel = Instance.new("TextLabel")
 
--- 2. PROPIEDADES: Configuración de la GUI
+-- 1B. Configuración de la GUI (Propiedades y Parentesco)
+-- Le da el padre al ScreenGui
 ScreenGui.Parent = Player:WaitForChild("PlayerGui")
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
@@ -26,7 +26,8 @@ TextButton.BackgroundColor3 = Color3.fromRGB(255, 21, 0)
 TextButton.BackgroundTransparency = 0.500
 TextButton.BorderColor3 = Color3.fromRGB(0, 0, 0)
 TextButton.BorderSizePixel = 0
-TextButton.Position = UDim2.new(0.0243478268, 0, 0.443152457, 0)
+-- POSICIÓN: Ajustada a 0.85 para situarse por encima del chat.
+TextButton.Position = UDim2.new(0.024, 0, 0.85, 0) 
 TextButton.Size = UDim2.new(0, 151, 0, 44)
 TextButton.Font = Enum.Font.Bangers
 TextButton.Text = "NOCLIP/SPEED"
@@ -47,12 +48,22 @@ TextLabel.Text = "OFFLINE"
 TextLabel.TextColor3 = Color3.fromRGB(0, 0, 0)
 TextLabel.TextSize = 18.000
 
--- 3. FUNCIONALIDAD: Lógica de Noclip, Velocidad e Invisibilidad
+-- ===================================================
+-- 2. VARIABLES Y FUNCIONALIDAD (AHORA DESPUÉS DE LA GUI)
+-- ===================================================
+
+-- Variables de Estado y Configuración
+local isEnabled = false
+local defaultWalkSpeed = 16 
+local boostedWalkSpeed = 70 
+local maxTransparency = 1.0 
+
+local persistentLoop = nil 
 
 -- Función para obtener el personaje y sus partes
 local function getCharacterParts()
-	-- Espera por el personaje actual o el nuevo si ya se ha añadido
 	local char = Player.Character
+	-- Usamos Player.CharacterAdded:Wait() para esperar que el personaje exista.
 	while not char or not char.Parent do
 		char = Player.CharacterAdded:Wait()
 	end
@@ -60,54 +71,77 @@ local function getCharacterParts()
 	return char, humanoid
 end
 
-local function applyModifications(char, humanoid, enable)
-	if not char or not humanoid then return end 
+-- Función para aplicar las modificaciones (Noclip, Invisibilidad)
+local function setCharacterProperties(char, humanoid, transparency, canCollide, walkSpeed)
+	if not char or not humanoid then return end
 
-	local targetTransparency = enable and maxTransparency or 0
-	local targetCanCollide = not enable -- false para noclip, true para normal
+	-- Velocidad (Humanoid)
+	humanoid.WalkSpeed = walkSpeed
 
-	-- 1. Noclip e Invisibilidad (CanCollide y Transparency)
+	-- Noclip e Invisibilidad (Partes y Accesorios)
 	for _, part in ipairs(char:GetChildren()) do
 		if part:IsA("BasePart") then
-			-- Noclip
-			part.CanCollide = targetCanCollide
-
-			-- Invisibilidad (Solo en LocalScript)
-			part.LocalTransparencyModifier = targetTransparency
+			part.CanCollide = canCollide
+			part.LocalTransparencyModifier = transparency
 		elseif part:IsA("Accessory") then
-			-- También aplica a los accesorios (sombreros, etc.)
 			for _, child in ipairs(part:GetChildren()) do
 				if child:IsA("BasePart") then
-					child.LocalTransparencyModifier = targetTransparency
+					child.LocalTransparencyModifier = transparency
 				end
 			end
 		end
 	end
-
-	-- 2. Velocidad (WalkSpeed)
-	humanoid.WalkSpeed = enable and boostedWalkSpeed or defaultWalkSpeed
-
-	-- 3. Actualizar la GUI
-	TextButton.BackgroundColor3 = enable and Color3.fromRGB(0, 170, 0) or Color3.fromRGB(255, 21, 0)
-	TextButton.Text = enable and "ACTIVADO" or "NOCLIP/SPEED"
-	TextLabel.Text = enable and "INVISIBLE" or "OFFLINE"
 end
 
-local function toggle()
-	isEnabled = not isEnabled 
+local function startModifications()
+	isEnabled = true
 	local Character, Humanoid = getCharacterParts()
 
-	applyModifications(Character, Humanoid, isEnabled)
+	-- Iniciar Bucle Persistente (Contrarresta la corrección del servidor)
+	persistentLoop = RunService.Heartbeat:Connect(function()
+		-- Re-aplicar Noclip, Velocidad e Invisibilidad
+		setCharacterProperties(Character, Humanoid, maxTransparency, false, boostedWalkSpeed)
+	end)
+
+	-- Actualizar la GUI
+	TextButton.BackgroundColor3 = Color3.fromRGB(0, 170, 0) -- Verde
+	TextButton.Text = "ACTIVADO (OP)"
+	TextLabel.Text = "INVISIBLE & RAPIDO"
+end
+
+local function stopModifications()
+	isEnabled = false
+	local Character, Humanoid = getCharacterParts()
+
+	-- Detener el Bucle Persistente
+	if persistentLoop then
+		persistentLoop:Disconnect()
+		persistentLoop = nil
+	end
+
+	-- Restablecer las propiedades del personaje
+	setCharacterProperties(Character, Humanoid, 0, true, defaultWalkSpeed)
+
+	-- Actualizar la GUI
+	TextButton.BackgroundColor3 = Color3.fromRGB(255, 21, 0) -- Rojo original
+	TextButton.Text = "NOCLIP/SPEED"
+	TextLabel.Text = "OFFLINE"
 end
 
 -- Conecta la función de alternancia (Toggle) al clic del botón
-TextButton.MouseButton1Click:Connect(toggle)
+TextButton.MouseButton1Click:Connect(function()
+	if isEnabled then
+		stopModifications()
+	else
+		startModifications()
+	end
+end)
 
 -- Manejar la reaparición del personaje (CharacterAdded)
 Player.CharacterAdded:Connect(function(newCharacter)
-	-- Si el modo estaba activado antes de morir, reaplicamos los cambios
+	-- Si estaba activado, detenemos y reiniciamos para que el bucle se conecte al nuevo personaje.
 	if isEnabled then
-		local _, Humanoid = getCharacterParts()
-		applyModifications(newCharacter, Humanoid, true) 
+		stopModifications() 
+		startModifications() 
 	end
 end)
