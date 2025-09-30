@@ -1,15 +1,15 @@
--- Script: Noclip y Velocidad Aumentada (Toggle)
+-- Script: Noclip, Velocidad Aumentada e Invisibilidad (Toggle)
 -- DEBE ser un SOLO LocalScript ubicado en StarterGui o StarterPlayerScripts.
 
 -- Servicios
 local Player = game.Players.LocalPlayer
-local Character = Player.Character or Player.CharacterAdded:Wait()
 local UIS = game:GetService("UserInputService")
 
 -- Variables de Estado y Configuración
 local isEnabled = false
-local defaultWalkSpeed = 16 -- Velocidad normal del personaje
-local boostedWalkSpeed = 50 -- Nueva velocidad al activar el Noclip (puedes cambiar este valor)
+local defaultWalkSpeed = 16 
+local boostedWalkSpeed = 50 -- Velocidad aumentada
+local maxTransparency = 0.85 -- Nivel de invisibilidad (1.0 es totalmente invisible)
 
 -- 1. INSTANCIAS: Creación de la GUI
 local ScreenGui = Instance.new("ScreenGui")
@@ -31,7 +31,7 @@ TextButton.Size = UDim2.new(0, 151, 0, 44)
 TextButton.Font = Enum.Font.Bangers
 TextButton.Text = "NOCLIP/SPEED"
 TextButton.TextColor3 = Color3.fromRGB(0, 0, 0)
-TextButton.TextSize = 18.000 -- Reducido un poco para que quepa el texto
+TextButton.TextSize = 18.000 
 
 UICorner.Parent = TextButton
 
@@ -43,13 +43,13 @@ TextLabel.BorderSizePixel = 0
 TextLabel.Position = UDim2.new(-0.132450327, 0, -0.681818187, 0)
 TextLabel.Size = UDim2.new(0, 190, 0, 30)
 TextLabel.Font = Enum.Font.FredokaOne
-TextLabel.Text = "OFFLINE" -- Estado inicial
+TextLabel.Text = "OFFLINE" 
 TextLabel.TextColor3 = Color3.fromRGB(0, 0, 0)
 TextLabel.TextSize = 18.000
 
--- 3. FUNCIONALIDAD: Lógica de Noclip y Velocidad
+-- 3. FUNCIONALIDAD: Lógica de Noclip, Velocidad e Invisibilidad
 
--- Función para obtener el personaje y sus partes (clave para el noclip/velocidad)
+-- Función para obtener el personaje y sus partes
 local function getCharacterParts()
 	-- Espera por el personaje actual o el nuevo si ya se ha añadido
 	local char = Player.Character
@@ -61,13 +61,26 @@ local function getCharacterParts()
 end
 
 local function applyModifications(char, humanoid, enable)
-	if not char or not humanoid then return end -- Seguridad
+	if not char or not humanoid then return end 
 
-	-- 1. Noclip (CanCollide)
+	local targetTransparency = enable and maxTransparency or 0
+	local targetCanCollide = not enable -- false para noclip, true para normal
+
+	-- 1. Noclip e Invisibilidad (CanCollide y Transparency)
 	for _, part in ipairs(char:GetChildren()) do
 		if part:IsA("BasePart") then
-			-- Si 'enable' es true, CanCollide es false (Noclip ON). Si es false, CanCollide es true (Noclip OFF).
-			part.CanCollide = not enable 
+			-- Noclip
+			part.CanCollide = targetCanCollide
+
+			-- Invisibilidad (Solo en LocalScript)
+			part.LocalTransparencyModifier = targetTransparency
+		elseif part:IsA("Accessory") then
+			-- También aplica a los accesorios (sombreros, etc.)
+			for _, child in ipairs(part:GetChildren()) do
+				if child:IsA("BasePart") then
+					child.LocalTransparencyModifier = targetTransparency
+				end
+			end
 		end
 	end
 
@@ -77,11 +90,11 @@ local function applyModifications(char, humanoid, enable)
 	-- 3. Actualizar la GUI
 	TextButton.BackgroundColor3 = enable and Color3.fromRGB(0, 170, 0) or Color3.fromRGB(255, 21, 0)
 	TextButton.Text = enable and "ACTIVADO" or "NOCLIP/SPEED"
-	TextLabel.Text = enable and "ONLINE" or "OFFLINE"
+	TextLabel.Text = enable and "INVISIBLE" or "OFFLINE"
 end
 
 local function toggle()
-	isEnabled = not isEnabled -- Cambia el estado (ON a OFF, o OFF a ON)
+	isEnabled = not isEnabled 
 	local Character, Humanoid = getCharacterParts()
 
 	applyModifications(Character, Humanoid, isEnabled)
@@ -92,12 +105,9 @@ TextButton.MouseButton1Click:Connect(toggle)
 
 -- Manejar la reaparición del personaje (CharacterAdded)
 Player.CharacterAdded:Connect(function(newCharacter)
-	Character = newCharacter
-
-	-- Debemos aplicar los cambios al nuevo personaje si el modo está activado.
+	-- Si el modo estaba activado antes de morir, reaplicamos los cambios
 	if isEnabled then
 		local _, Humanoid = getCharacterParts()
-		-- Reaplicar las modificaciones al nuevo personaje
-		applyModifications(Character, Humanoid, true) 
+		applyModifications(newCharacter, Humanoid, true) 
 	end
 end)
