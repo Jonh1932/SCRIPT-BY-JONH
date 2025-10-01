@@ -1,22 +1,23 @@
--- Script: Noclip, Velocidad, Invisibilidad y Salto Infinito (OP)
--- UBICACIÓN CORRECTA: LocalScript DENTRO de StarterGui
+-- Script: OP Mode (Velocidad, Invisibilidad, Noclip, Salto Infinito y Vuelo)
+-- LocalScript en StarterGui
 
--- Servicios
 local Player = game.Players.LocalPlayer
 local UIS = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
 
 -- ===================================================
--- 1. GUI
+-- 1. GUI ORIGINAL
 -- ===================================================
 local ScreenGui = Instance.new("ScreenGui")
 local TextButton = Instance.new("TextButton")
 local UICorner = Instance.new("UICorner")
 local TextLabel = Instance.new("TextLabel")
+local FlyButton = Instance.new("TextButton") -- Nuevo botón Fly
 
 ScreenGui.Parent = Player:WaitForChild("PlayerGui")
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
+-- Botón principal
 TextButton.Parent = ScreenGui
 TextButton.BackgroundColor3 = Color3.fromRGB(255, 21, 0)
 TextButton.BackgroundTransparency = 0.500
@@ -26,9 +27,9 @@ TextButton.Font = Enum.Font.Bangers
 TextButton.Text = "TOGGLE OP MODE" 
 TextButton.TextColor3 = Color3.fromRGB(0, 0, 0)
 TextButton.TextSize = 18.000 
-
 UICorner.Parent = TextButton
 
+-- Label dentro del botón
 TextLabel.Parent = TextButton
 TextLabel.BackgroundTransparency = 1.000
 TextLabel.Position = UDim2.new(-0.132, 0, -0.68, 0)
@@ -38,16 +39,31 @@ TextLabel.Text = "OFFLINE"
 TextLabel.TextColor3 = Color3.fromRGB(0, 0, 0)
 TextLabel.TextSize = 18.000
 
+-- Botón Fly (extra para móviles)
+FlyButton.Parent = ScreenGui
+FlyButton.BackgroundColor3 = Color3.fromRGB(0, 0, 255)
+FlyButton.BackgroundTransparency = 0.3
+FlyButton.Position = UDim2.new(0.8, 0, 0.85, 0)
+FlyButton.Size = UDim2.new(0, 120, 0, 44)
+FlyButton.Font = Enum.Font.Bangers
+FlyButton.Text = "TOGGLE FLY" 
+FlyButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+FlyButton.TextSize = 18.000
+
 -- ===================================================
 -- 2. VARIABLES
 -- ===================================================
 local isEnabled = false
+local flying = false
+local noclip = false
+
+local flyConnection
+local noclipConnection
+local persistentLoop
+local jumpConnection
+
 local defaultWalkSpeed = 16 
 local boostedWalkSpeed = 70 
-local maxTransparency = 1.0 
-
-local persistentLoop = nil 
-local jumpConnection = nil
 
 -- ===================================================
 -- 3. FUNCIONES
@@ -55,78 +71,154 @@ local jumpConnection = nil
 local function getCharacterParts()
 	local char = Player.Character or Player.CharacterAdded:Wait()
 	local humanoid = char:WaitForChild("Humanoid")
-	return char, humanoid
+	local hrp = char:WaitForChild("HumanoidRootPart")
+	return char, humanoid, hrp
 end
 
-local function setCharacterProperties(char, humanoid, transparency, canCollide, walkSpeed)
-	if not char or not humanoid then return end
-
-	-- Velocidad
-	humanoid.WalkSpeed = walkSpeed
-
-	-- Noclip e Invisibilidad
+-- Invisibilidad real (solo pelo visible)
+local function setInvisible(char)
 	for _, part in ipairs(char:GetChildren()) do
 		if part:IsA("BasePart") then
-			part.CanCollide = canCollide
-			part.LocalTransparencyModifier = transparency
-		elseif part:IsA("Accessory") then
-			for _, child in ipairs(part:GetChildren()) do
-				if child:IsA("BasePart") then
-					child.LocalTransparencyModifier = transparency
-				end
+			part.Transparency = 1
+		elseif part:IsA("Accessory") and part:FindFirstChild("Handle") then
+			if string.find(part.Name:lower(), "hair") then
+				part.Handle.Transparency = 0
+			else
+				part.Handle.Transparency = 1
 			end
 		end
 	end
 end
 
--- Activar modo OP
+local function setVisible(char)
+	for _, part in ipairs(char:GetChildren()) do
+		if part:IsA("BasePart") then
+			part.Transparency = 0
+		elseif part:IsA("Accessory") and part:FindFirstChild("Handle") then
+			part.Handle.Transparency = 0
+		end
+	end
+end
+
+-- Fly
+local function startFlying(hrp)
+	flying = true
+	local speed = 50
+	flyConnection = RunService.RenderStepped:Connect(function()
+		local moveDir = Vector3.zero
+		if UIS:IsKeyDown(Enum.KeyCode.W) then
+			moveDir = moveDir + (workspace.CurrentCamera.CFrame.LookVector)
+		end
+		if UIS:IsKeyDown(Enum.KeyCode.S) then
+			moveDir = moveDir - (workspace.CurrentCamera.CFrame.LookVector)
+		end
+		if UIS:IsKeyDown(Enum.KeyCode.A) then
+			moveDir = moveDir - (workspace.CurrentCamera.CFrame.RightVector)
+		end
+		if UIS:IsKeyDown(Enum.KeyCode.D) then
+			moveDir = moveDir + (workspace.CurrentCamera.CFrame.RightVector)
+		end
+		if UIS:IsKeyDown(Enum.KeyCode.Space) then
+			moveDir = moveDir + Vector3.new(0,1,0)
+		end
+		if UIS:IsKeyDown(Enum.KeyCode.LeftControl) then
+			moveDir = moveDir - Vector3.new(0,1,0)
+		end
+		if moveDir.Magnitude > 0 then
+			hrp.Velocity = moveDir.Unit * speed
+		else
+			hrp.Velocity = Vector3.zero
+		end
+	end)
+	FlyButton.Text = "FLY ON"
+	FlyButton.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
+end
+
+local function stopFlying(hrp)
+	flying = false
+	if flyConnection then flyConnection:Disconnect() flyConnection=nil end
+	hrp.Velocity = Vector3.zero
+	FlyButton.Text = "TOGGLE FLY"
+	FlyButton.BackgroundColor3 = Color3.fromRGB(0, 0, 255)
+end
+
+-- Noclip
+local function startNoclip(char)
+	noclip = true
+	noclipConnection = RunService.Stepped:Connect(function()
+		for _, part in ipairs(char:GetDescendants()) do
+			if part:IsA("BasePart") and part.CanCollide then
+				part.CanCollide = false
+			end
+		end
+	end)
+end
+
+local function stopNoclip(char)
+	noclip = false
+	if noclipConnection then noclipConnection:Disconnect() noclipConnection=nil end
+	for _, part in ipairs(char:GetDescendants()) do
+		if part:IsA("BasePart") then
+			part.CanCollide = true
+		end
+	end
+end
+
+-- ===================================================
+-- 4. MODO OP
+-- ===================================================
 local function startModifications()
 	isEnabled = true
-	local Character, Humanoid = getCharacterParts()
+	local char, hum, hrp = getCharacterParts()
 
-	-- Bucle Persistente
+	-- Velocidad persistente
 	persistentLoop = RunService.Heartbeat:Connect(function()
-		setCharacterProperties(Character, Humanoid, maxTransparency, false, boostedWalkSpeed)
+		if hum and hum.Health > 0 then
+			hum.WalkSpeed = boostedWalkSpeed
+		end
 	end)
 
 	-- Salto infinito
 	jumpConnection = UIS.JumpRequest:Connect(function()
-		if Humanoid:GetState() ~= Enum.HumanoidStateType.Dead then
-			Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+		if hum:GetState() ~= Enum.HumanoidStateType.Dead then
+			hum:ChangeState(Enum.HumanoidStateType.Jumping)
 		end
 	end)
+
+	-- Invisibilidad + hundir cuerpo
+	setInvisible(char)
+	hrp.CFrame = hrp.CFrame * CFrame.new(0, -5, 0)
+
+	-- Noclip
+	startNoclip(char)
 
 	-- GUI
 	TextButton.BackgroundColor3 = Color3.fromRGB(0, 170, 0) 
 	TextButton.Text = "ACTIVADO (OP)"
-	TextLabel.Text = "JUMP, INV, RAPIDO"
+	TextLabel.Text = "JUMP, INV, SPEED, FLY, NOCLIP"
 end
 
--- Desactivar modo OP
 local function stopModifications()
 	isEnabled = false
-	local Character, Humanoid = getCharacterParts()
+	local char, hum, hrp = getCharacterParts()
 
-	-- Detener el bucle
-	if persistentLoop then
-		persistentLoop:Disconnect()
-		persistentLoop = nil
-	end
-	if jumpConnection then
-		jumpConnection:Disconnect()
-		jumpConnection = nil
-	end
+	if persistentLoop then persistentLoop:Disconnect() persistentLoop=nil end
+	if jumpConnection then jumpConnection:Disconnect() jumpConnection=nil end
+	if flyConnection then flyConnection:Disconnect() flyConnection=nil end
+	if noclipConnection then noclipConnection:Disconnect() noclipConnection=nil end
 
-	-- Restaurar valores
-	setCharacterProperties(Character, Humanoid, 0, true, defaultWalkSpeed)
+	hum.WalkSpeed = defaultWalkSpeed
+	setVisible(char)
+	stopNoclip(char)
+	stopFlying(hrp)
 
-	-- GUI
+	hrp.CFrame = hrp.CFrame * CFrame.new(0, 5, 0)
+
 	TextButton.BackgroundColor3 = Color3.fromRGB(255, 21, 0) 
 	TextButton.Text = "TOGGLE OP MODE"
 	TextLabel.Text = "OFFLINE"
 end
 
--- Toggle
 local function toggle()
 	if isEnabled then
 		stopModifications()
@@ -135,7 +227,35 @@ local function toggle()
 	end
 end
 
--- Manejar respawn
+-- ===================================================
+-- 5. EVENTOS
+-- ===================================================
+TextButton.MouseButton1Click:Connect(toggle)
+
+-- Botón Fly
+FlyButton.MouseButton1Click:Connect(function()
+	local _, _, hrp = getCharacterParts()
+	if flying then
+		stopFlying(hrp)
+	else
+		startFlying(hrp)
+	end
+end)
+
+-- Tecla F también activa Fly en PC
+UIS.InputBegan:Connect(function(input, gpe)
+	if gpe then return end
+	if input.KeyCode == Enum.KeyCode.F and isEnabled then
+		local _, _, hrp = getCharacterParts()
+		if flying then
+			stopFlying(hrp)
+		else
+			startFlying(hrp)
+		end
+	end
+end)
+
+-- Respawn
 Player.CharacterAdded:Connect(function()
 	if isEnabled then
 		stopModifications()
@@ -143,6 +263,3 @@ Player.CharacterAdded:Connect(function()
 		startModifications()
 	end
 end)
-
--- Botón
-TextButton.MouseButton1Click:Connect(toggle)
