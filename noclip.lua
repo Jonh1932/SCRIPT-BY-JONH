@@ -1,90 +1,75 @@
--- 🎣 AutoFishing GUI (Candy Cane Rod)
--- Orden real de pesca: reset -> cast -> boost -> reel
--- con GUI para Start / Stop
+-- Script generado por TurtleSpy, hecho por Intrer#0421
 
--- ⚡ Servicios
-local player = game:GetService("Players").LocalPlayer
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local rod = player.Backpack:FindFirstChild("Candy Cane Rod") 
-    or workspace.NoReaperPls:FindFirstChild("Candy Cane Rod")
+-- Función para activar los hacks
+local function activateHacks()
+    -- Activar Ping No Re
+    game:GetService("ReplicatedStorage").Remotes.PINGNORE:FireServer()
 
--- ⚡ GUI principal
-local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "AutoFishingGUI"
-ScreenGui.Parent = player:WaitForChild("PlayerGui")
+    -- Enviar Ping
+    game:GetService("ReplicatedStorage").PingSend:InvokeServer(46, 97)
 
-local Frame = Instance.new("Frame", ScreenGui)
-Frame.Size = UDim2.new(0, 260, 0, 140)
-Frame.Position = UDim2.new(0.05, 0, 0.3, 0)
-Frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-Frame.BorderSizePixel = 0
-Frame.Active = true
-Frame.Draggable = true
+    -- Stamina infinita
+    game:GetService("Players").LocalPlayer.PlayerGui.Stamina.Frame.Speed:FireServer(10525299, 32)
 
-local UICorner = Instance.new("UICorner", Frame)
-UICorner.CornerRadius = UDim.new(0, 10)
+    -- Accion de Header
+    game:GetService("ReplicatedStorage").Remotes.Action:FireServer("Header")
 
-local Title = Instance.new("TextLabel", Frame)
-Title.Size = UDim2.new(1, 0, 0, 25)
-Title.Text = "🎣 AutoFishing Candy Cane"
-Title.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
-Title.TextColor3 = Color3.fromRGB(255, 255, 255)
-Title.TextScaled = true
-Title.BorderSizePixel = 0
-local UICorner2 = Instance.new("UICorner", Title)
-UICorner2.CornerRadius = UDim.new(0, 10)
+    -- Remotes con ID específico
+    game:GetService("ReplicatedStorage").Remotes["0.3430534413616612"]:FireServer(6.3160881996154785)
+    game:GetService("ReplicatedStorage").Remotes["0.3430534413616612"]:FireServer(6.3160881996154785)
 
-local Button = Instance.new("TextButton", Frame)
-Button.Size = UDim2.new(0, 220, 0, 40)
-Button.Position = UDim2.new(0.5, -110, 0.55, 0)
-Button.Text = "▶ Start AutoFishing"
-Button.TextScaled = true
-Button.BackgroundColor3 = Color3.fromRGB(0, 170, 0)
-Button.TextColor3 = Color3.new(1,1,1)
-Button.BorderSizePixel = 0
-local UICorner3 = Instance.new("UICorner", Button)
-UICorner3.CornerRadius = UDim.new(0, 6)
+    -- SoftDisPlayer
+    game:GetService("ReplicatedStorage").Remotes.SoftDisPlayer:FireServer(game:GetService("Players").LocalPlayer, 6.042978763580322, false)
 
--- ⚡ Variables de control
-local running = false
-local DelayTime = 2 -- tiempo entre pescas (ajústalo si va muy rápido)
+    -- ShootTheBaII
+    game:GetService("ReplicatedStorage").Remotes.ShootTheBaII:FireServer(
+        nil,
+        CFrame.new(50.805397, 1.46151423, 52.0827522, 0.496118546, -1.09897551e-11, -0.8682549, 5.45194185e-12, 1, -9.54206679e-12, 0.8682549, 3.23092247e-16, 0.496118546),
+        0.6050488948822021,
+        nil,
+        false,
+        true,
+        "None",
+        true,
+        false,
+        "Center"
+    )
+end
 
--- ⚡ Función AutoFishing
-local function AutoFish()
-    while running and task.wait(DelayTime) do
-        if not rod or not rod.Parent then
-            rod = player.Backpack:FindFirstChild("Candy Cane Rod") 
-                or workspace.NoReaperPls:FindFirstChild("Candy Cane Rod")
-        end
-        if rod then
-            -- 1. Resetear caña
-            rod.events.reset:FireServer()
-            task.wait(0.3)
+-- Función para desactivar los hacks
+local function deactivateHacks()
+    -- Aquí puedes agregar código para desactivar los hacks si es necesario
+end
 
-            -- 2. Lanzar caña
-            rod.events.cast:FireServer(76,1)
-            task.wait(0.5)
+-- Crear la GUI
+local screenGui = Instance.new("ScreenGui")
+local frame = Instance.new("Frame")
+local button = Instance.new("TextButton")
 
-            -- 3. Pedir boost (opcional)
-            ReplicatedStorage.packages.Net["RF/RequestCache"]:InvokeServer("Boost.Resilience")
-            task.wait(0.5)
+-- Configurar la GUI
+screenGui.Parent = game:GetService("CoreGui")
+frame.Size = UDim2.new(0, 200, 0, 100)
+frame.Position = UDim2.new(0.5, -100, 0.5, -50)
+frame.BackgroundColor3 = Color3.new(0.2, 0.2, 0.2)
+frame.Parent = screenGui
 
-            -- 4. Finalizar reeling (captura)
-            ReplicatedStorage.events.reelfinished:FireServer(math.random(), false)
-        end
+button.Size = UDim2.new(1, 0, 1, 0)
+button.Position = UDim2.new(0, 0, 0, 0)
+button.Text = "Activar Hacks"
+button.BackgroundColor3 = Color3.new(0.4, 0.4, 0.4)
+button.TextColor3 = Color3.new(1, 1, 1)
+button.Parent = frame
+
+-- Función para manejar el clic del botón
+local function onButtonClick()
+    if button.Text == "Activar Hacks" then
+        activateHacks()
+        button.Text = "Desactivar Hacks"
+    else
+        deactivateHacks()
+        button.Text = "Activar Hacks"
     end
 end
 
--- ⚡ Botón Start/Stop
-Button.MouseButton1Click:Connect(function()
-    if running then
-        running = false
-        Button.Text = "▶ Start AutoFishing"
-        Button.BackgroundColor3 = Color3.fromRGB(0,170,0)
-    else
-        running = true
-        Button.Text = "■ Stop AutoFishing"
-        Button.BackgroundColor3 = Color3.fromRGB(170,0,0)
-        task.spawn(AutoFish)
-    end
-end)
+-- Conectar la función al evento de clic del botón
+button.MouseButton1Click:Connect(onButtonClick)
