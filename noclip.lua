@@ -1,4 +1,4 @@
--- Script: OP Mode (Velocidad, Invisibilidad, Noclip, Salto Infinito y Vuelo)
+-- SCRIPT OP COMPLETO
 -- LocalScript en StarterGui
 
 local Player = game.Players.LocalPlayer
@@ -12,12 +12,12 @@ local ScreenGui = Instance.new("ScreenGui")
 local TextButton = Instance.new("TextButton")
 local UICorner = Instance.new("UICorner")
 local TextLabel = Instance.new("TextLabel")
-local FlyButton = Instance.new("TextButton") -- Nuevo botón Fly
+local FlyButton = Instance.new("TextButton")
 
 ScreenGui.Parent = Player:WaitForChild("PlayerGui")
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
--- Botón principal
+-- Botón OP
 TextButton.Parent = ScreenGui
 TextButton.BackgroundColor3 = Color3.fromRGB(255, 21, 0)
 TextButton.BackgroundTransparency = 0.500
@@ -29,7 +29,7 @@ TextButton.TextColor3 = Color3.fromRGB(0, 0, 0)
 TextButton.TextSize = 18.000 
 UICorner.Parent = TextButton
 
--- Label dentro del botón
+-- Label estado
 TextLabel.Parent = TextButton
 TextLabel.BackgroundTransparency = 1.000
 TextLabel.Position = UDim2.new(-0.132, 0, -0.68, 0)
@@ -39,7 +39,7 @@ TextLabel.Text = "OFFLINE"
 TextLabel.TextColor3 = Color3.fromRGB(0, 0, 0)
 TextLabel.TextSize = 18.000
 
--- Botón Fly (extra para móviles)
+-- Botón Fly
 FlyButton.Parent = ScreenGui
 FlyButton.BackgroundColor3 = Color3.fromRGB(0, 0, 255)
 FlyButton.BackgroundTransparency = 0.3
@@ -61,6 +61,8 @@ local flyConnection
 local noclipConnection
 local persistentLoop
 local jumpConnection
+local healLoop
+local antiVoidLoop
 
 local defaultWalkSpeed = 16 
 local boostedWalkSpeed = 70 
@@ -75,7 +77,7 @@ local function getCharacterParts()
 	return char, humanoid, hrp
 end
 
--- Invisibilidad real (solo pelo visible)
+-- Invisibilidad (solo pelo visible)
 local function setInvisible(char)
 	for _, part in ipairs(char:GetChildren()) do
 		if part:IsA("BasePart") then
@@ -103,7 +105,7 @@ end
 -- Fly
 local function startFlying(hrp)
 	flying = true
-	local speed = 50
+	local speed = 60
 	flyConnection = RunService.RenderStepped:Connect(function()
 		local moveDir = Vector3.zero
 		if UIS:IsKeyDown(Enum.KeyCode.W) then
@@ -164,6 +166,32 @@ local function stopNoclip(char)
 	end
 end
 
+-- AntiKill + Heal
+local function startAntiKill(hum, hrp)
+	healLoop = RunService.Heartbeat:Connect(function()
+		if hum.Health < hum.MaxHealth then
+			hum.Health = hum.MaxHealth -- Autoheal
+		end
+	end)
+end
+
+local function stopAntiKill()
+	if healLoop then healLoop:Disconnect() healLoop=nil end
+end
+
+-- AntiVoid
+local function startAntiVoid(hrp)
+	antiVoidLoop = RunService.Heartbeat:Connect(function()
+		if hrp.Position.Y < -10 then
+			hrp.CFrame = CFrame.new(0, 50, 0) -- Teleport arriba
+		end
+	end)
+end
+
+local function stopAntiVoid()
+	if antiVoidLoop then antiVoidLoop:Disconnect() antiVoidLoop=nil end
+end
+
 -- ===================================================
 -- 4. MODO OP
 -- ===================================================
@@ -171,7 +199,7 @@ local function startModifications()
 	isEnabled = true
 	local char, hum, hrp = getCharacterParts()
 
-	-- Velocidad persistente
+	-- Velocidad
 	persistentLoop = RunService.Heartbeat:Connect(function()
 		if hum and hum.Health > 0 then
 			hum.WalkSpeed = boostedWalkSpeed
@@ -185,17 +213,22 @@ local function startModifications()
 		end
 	end)
 
-	-- Invisibilidad + hundir cuerpo
+	-- Invisibilidad (no hundir cuerpo ahora)
 	setInvisible(char)
-	hrp.CFrame = hrp.CFrame * CFrame.new(0, -5, 0)
 
 	-- Noclip
 	startNoclip(char)
 
+	-- AntiKill
+	startAntiKill(hum, hrp)
+
+	-- AntiVoid
+	startAntiVoid(hrp)
+
 	-- GUI
 	TextButton.BackgroundColor3 = Color3.fromRGB(0, 170, 0) 
 	TextButton.Text = "ACTIVADO (OP)"
-	TextLabel.Text = "JUMP, INV, SPEED, FLY, NOCLIP"
+	TextLabel.Text = "GOD, JUMP, INV, SPEED, FLY, NOCLIP"
 end
 
 local function stopModifications()
@@ -207,12 +240,13 @@ local function stopModifications()
 	if flyConnection then flyConnection:Disconnect() flyConnection=nil end
 	if noclipConnection then noclipConnection:Disconnect() noclipConnection=nil end
 
+	stopAntiKill()
+	stopAntiVoid()
+
 	hum.WalkSpeed = defaultWalkSpeed
 	setVisible(char)
 	stopNoclip(char)
 	stopFlying(hrp)
-
-	hrp.CFrame = hrp.CFrame * CFrame.new(0, 5, 0)
 
 	TextButton.BackgroundColor3 = Color3.fromRGB(255, 21, 0) 
 	TextButton.Text = "TOGGLE OP MODE"
