@@ -1,4 +1,4 @@
--- SCRIPT OP COMPLETO
+-- SCRIPT OP COMPLETO ARREGLADO
 -- LocalScript en StarterGui
 
 local Player = game.Players.LocalPlayer
@@ -64,8 +64,7 @@ local jumpConnection
 local healLoop
 local antiVoidLoop
 
-local defaultWalkSpeed = 16 
-local boostedWalkSpeed = 70 
+local boostedWalkSpeed = 70 -- Speed bypass CFrame
 
 -- ===================================================
 -- 3. FUNCIONES
@@ -144,15 +143,17 @@ local function stopFlying(hrp)
 	FlyButton.BackgroundColor3 = Color3.fromRGB(0, 0, 255)
 end
 
--- Noclip
-local function startNoclip(char)
+-- Noclip real (sin caer al suelo)
+local function startNoclip(char, hrp)
 	noclip = true
 	noclipConnection = RunService.Stepped:Connect(function()
 		for _, part in ipairs(char:GetDescendants()) do
-			if part:IsA("BasePart") and part.CanCollide then
+			if part:IsA("BasePart") then
 				part.CanCollide = false
 			end
 		end
+		-- Mantener flotando un poquito
+		hrp.Velocity = Vector3.new(0,0,0)
 	end)
 end
 
@@ -167,10 +168,10 @@ local function stopNoclip(char)
 end
 
 -- AntiKill + Heal
-local function startAntiKill(hum, hrp)
+local function startAntiKill(hum)
 	healLoop = RunService.Heartbeat:Connect(function()
 		if hum.Health < hum.MaxHealth then
-			hum.Health = hum.MaxHealth -- Autoheal
+			hum.Health = hum.MaxHealth
 		end
 	end)
 end
@@ -183,7 +184,7 @@ end
 local function startAntiVoid(hrp)
 	antiVoidLoop = RunService.Heartbeat:Connect(function()
 		if hrp.Position.Y < -10 then
-			hrp.CFrame = CFrame.new(0, 50, 0) -- Teleport arriba
+			hrp.CFrame = CFrame.new(0, 50, 0)
 		end
 	end)
 end
@@ -199,10 +200,13 @@ local function startModifications()
 	isEnabled = true
 	local char, hum, hrp = getCharacterParts()
 
-	-- Velocidad
+	-- Speed bypass con CFrame
 	persistentLoop = RunService.Heartbeat:Connect(function()
 		if hum and hum.Health > 0 then
-			hum.WalkSpeed = boostedWalkSpeed
+			local moveDir = hum.MoveDirection
+			if moveDir.Magnitude > 0 then
+				hrp.CFrame = hrp.CFrame + (moveDir * (boostedWalkSpeed/100))
+			end
 		end
 	end)
 
@@ -213,14 +217,14 @@ local function startModifications()
 		end
 	end)
 
-	-- Invisibilidad (no hundir cuerpo ahora)
+	-- Invisibilidad
 	setInvisible(char)
 
-	-- Noclip
-	startNoclip(char)
+	-- Noclip sin caer
+	startNoclip(char, hrp)
 
 	-- AntiKill
-	startAntiKill(hum, hrp)
+	startAntiKill(hum)
 
 	-- AntiVoid
 	startAntiVoid(hrp)
@@ -243,7 +247,6 @@ local function stopModifications()
 	stopAntiKill()
 	stopAntiVoid()
 
-	hum.WalkSpeed = defaultWalkSpeed
 	setVisible(char)
 	stopNoclip(char)
 	stopFlying(hrp)
@@ -266,7 +269,6 @@ end
 -- ===================================================
 TextButton.MouseButton1Click:Connect(toggle)
 
--- Botón Fly
 FlyButton.MouseButton1Click:Connect(function()
 	local _, _, hrp = getCharacterParts()
 	if flying then
@@ -276,7 +278,6 @@ FlyButton.MouseButton1Click:Connect(function()
 	end
 end)
 
--- Tecla F también activa Fly en PC
 UIS.InputBegan:Connect(function(input, gpe)
 	if gpe then return end
 	if input.KeyCode == Enum.KeyCode.F and isEnabled then
@@ -289,7 +290,6 @@ UIS.InputBegan:Connect(function(input, gpe)
 	end
 end)
 
--- Respawn
 Player.CharacterAdded:Connect(function()
 	if isEnabled then
 		stopModifications()
