@@ -1,299 +1,93 @@
--- SCRIPT OP COMPLETO ARREGLADO
--- LocalScript en StarterGui
+-- 🎣 AutoFishing GUI para Candy Cane Rod
+-- by GPT
+-- Con este script puedes elegir el pez que quieras y pescar infinito con 1 click
 
-local Player = game.Players.LocalPlayer
-local UIS = game:GetService("UserInputService")
-local RunService = game:GetService("RunService")
+-- ⚡ Servicios
+local player = game:GetService("Players").LocalPlayer
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local rod = player.Backpack:FindFirstChild("Candy Cane Rod") 
+    or workspace.NoReaperPls:FindFirstChild("Candy Cane Rod")
 
--- ===================================================
--- 1. GUI ORIGINAL
--- ===================================================
+-- ⚡ GUI principal
 local ScreenGui = Instance.new("ScreenGui")
-local TextButton = Instance.new("TextButton")
-local UICorner = Instance.new("UICorner")
-local TextLabel = Instance.new("TextLabel")
-local FlyButton = Instance.new("TextButton")
+ScreenGui.Name = "AutoFishingGUI"
+ScreenGui.Parent = player:WaitForChild("PlayerGui")
 
-ScreenGui.Parent = Player:WaitForChild("PlayerGui")
-ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+local Frame = Instance.new("Frame", ScreenGui)
+Frame.Size = UDim2.new(0, 260, 0, 140)
+Frame.Position = UDim2.new(0.05, 0, 0.3, 0)
+Frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+Frame.BorderSizePixel = 0
+Frame.Active = true
+Frame.Draggable = true
+Frame.BackgroundTransparency = 0.1
 
--- Botón OP
-TextButton.Parent = ScreenGui
-TextButton.BackgroundColor3 = Color3.fromRGB(255, 21, 0)
-TextButton.BackgroundTransparency = 0.500
-TextButton.Position = UDim2.new(0.024, 0, 0.85, 0) 
-TextButton.Size = UDim2.new(0, 151, 0, 44)
-TextButton.Font = Enum.Font.Bangers
-TextButton.Text = "TOGGLE OP MODE" 
-TextButton.TextColor3 = Color3.fromRGB(0, 0, 0)
-TextButton.TextSize = 18.000 
-UICorner.Parent = TextButton
+local UICorner = Instance.new("UICorner", Frame)
+UICorner.CornerRadius = UDim.new(0, 10)
 
--- Label estado
-TextLabel.Parent = TextButton
-TextLabel.BackgroundTransparency = 1.000
-TextLabel.Position = UDim2.new(-0.132, 0, -0.68, 0)
-TextLabel.Size = UDim2.new(0, 190, 0, 30)
-TextLabel.Font = Enum.Font.FredokaOne
-TextLabel.Text = "OFFLINE" 
-TextLabel.TextColor3 = Color3.fromRGB(0, 0, 0)
-TextLabel.TextSize = 18.000
+local Title = Instance.new("TextLabel", Frame)
+Title.Size = UDim2.new(1, 0, 0, 25)
+Title.Text = "🎣 AutoFishing Candy Cane"
+Title.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.TextScaled = true
+Title.BorderSizePixel = 0
+local UICorner2 = Instance.new("UICorner", Title)
+UICorner2.CornerRadius = UDim.new(0, 10)
 
--- Botón Fly
-FlyButton.Parent = ScreenGui
-FlyButton.BackgroundColor3 = Color3.fromRGB(0, 0, 255)
-FlyButton.BackgroundTransparency = 0.3
-FlyButton.Position = UDim2.new(0.8, 0, 0.85, 0)
-FlyButton.Size = UDim2.new(0, 120, 0, 44)
-FlyButton.Font = Enum.Font.Bangers
-FlyButton.Text = "TOGGLE FLY" 
-FlyButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-FlyButton.TextSize = 18.000
+local TextBox = Instance.new("TextBox", Frame)
+TextBox.Size = UDim2.new(0, 220, 0, 30)
+TextBox.Position = UDim2.new(0.5, -110, 0.3, 0)
+TextBox.PlaceholderText = "Escribe pez (ej: Mahi Mahi)"
+TextBox.Text = ""
+TextBox.TextColor3 = Color3.fromRGB(255,255,255)
+TextBox.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+TextBox.BorderSizePixel = 0
+local UICorner3 = Instance.new("UICorner", TextBox)
+UICorner3.CornerRadius = UDim.new(0, 6)
 
--- ===================================================
--- 2. VARIABLES
--- ===================================================
-local isEnabled = false
-local flying = false
-local noclip = false
+local Button = Instance.new("TextButton", Frame)
+Button.Size = UDim2.new(0, 220, 0, 40)
+Button.Position = UDim2.new(0.5, -110, 0.65, 0)
+Button.Text = "▶ Start AutoFishing"
+Button.TextScaled = true
+Button.BackgroundColor3 = Color3.fromRGB(0, 170, 0)
+Button.TextColor3 = Color3.new(1,1,1)
+Button.BorderSizePixel = 0
+local UICorner4 = Instance.new("UICorner", Button)
+UICorner4.CornerRadius = UDim.new(0, 6)
 
-local flyConnection
-local noclipConnection
-local persistentLoop
-local jumpConnection
-local healLoop
-local antiVoidLoop
+-- ⚡ Variables de control
+local running = false
+local DelayTime = 1.5 -- tiempo entre pescas
 
-local boostedWalkSpeed = 70 -- Speed bypass CFrame
-
--- ===================================================
--- 3. FUNCIONES
--- ===================================================
-local function getCharacterParts()
-	local char = Player.Character or Player.CharacterAdded:Wait()
-	local humanoid = char:WaitForChild("Humanoid")
-	local hrp = char:WaitForChild("HumanoidRootPart")
-	return char, humanoid, hrp
+-- ⚡ Función de auto fishing
+local function AutoFish(FishName)
+    while running and task.wait(DelayTime) do
+        if not rod or not rod.Parent then
+            rod = player.Backpack:FindFirstChild("Candy Cane Rod") 
+                or workspace.NoReaperPls:FindFirstChild("Candy Cane Rod")
+        end
+        if rod then
+            rod.events.cast:FireServer(30.4,1)
+            ReplicatedStorage.packages.Net["RF/ResourceStream/Request"]:InvokeServer("fish", FishName)
+            ReplicatedStorage.events.reelfinished:FireServer(100,false)
+            rod.events.reset:FireServer()
+        end
+    end
 end
 
--- Invisibilidad (solo pelo visible)
-local function setInvisible(char)
-	for _, part in ipairs(char:GetChildren()) do
-		if part:IsA("BasePart") then
-			part.Transparency = 1
-		elseif part:IsA("Accessory") and part:FindFirstChild("Handle") then
-			if string.find(part.Name:lower(), "hair") then
-				part.Handle.Transparency = 0
-			else
-				part.Handle.Transparency = 1
-			end
-		end
-	end
-end
-
-local function setVisible(char)
-	for _, part in ipairs(char:GetChildren()) do
-		if part:IsA("BasePart") then
-			part.Transparency = 0
-		elseif part:IsA("Accessory") and part:FindFirstChild("Handle") then
-			part.Handle.Transparency = 0
-		end
-	end
-end
-
--- Fly
-local function startFlying(hrp)
-	flying = true
-	local speed = 60
-	flyConnection = RunService.RenderStepped:Connect(function()
-		local moveDir = Vector3.zero
-		if UIS:IsKeyDown(Enum.KeyCode.W) then
-			moveDir = moveDir + (workspace.CurrentCamera.CFrame.LookVector)
-		end
-		if UIS:IsKeyDown(Enum.KeyCode.S) then
-			moveDir = moveDir - (workspace.CurrentCamera.CFrame.LookVector)
-		end
-		if UIS:IsKeyDown(Enum.KeyCode.A) then
-			moveDir = moveDir - (workspace.CurrentCamera.CFrame.RightVector)
-		end
-		if UIS:IsKeyDown(Enum.KeyCode.D) then
-			moveDir = moveDir + (workspace.CurrentCamera.CFrame.RightVector)
-		end
-		if UIS:IsKeyDown(Enum.KeyCode.Space) then
-			moveDir = moveDir + Vector3.new(0,1,0)
-		end
-		if UIS:IsKeyDown(Enum.KeyCode.LeftControl) then
-			moveDir = moveDir - Vector3.new(0,1,0)
-		end
-		if moveDir.Magnitude > 0 then
-			hrp.Velocity = moveDir.Unit * speed
-		else
-			hrp.Velocity = Vector3.zero
-		end
-	end)
-	FlyButton.Text = "FLY ON"
-	FlyButton.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
-end
-
-local function stopFlying(hrp)
-	flying = false
-	if flyConnection then flyConnection:Disconnect() flyConnection=nil end
-	hrp.Velocity = Vector3.zero
-	FlyButton.Text = "TOGGLE FLY"
-	FlyButton.BackgroundColor3 = Color3.fromRGB(0, 0, 255)
-end
-
--- Noclip real (sin caer al suelo)
-local function startNoclip(char, hrp)
-	noclip = true
-	noclipConnection = RunService.Stepped:Connect(function()
-		for _, part in ipairs(char:GetDescendants()) do
-			if part:IsA("BasePart") then
-				part.CanCollide = false
-			end
-		end
-		-- Mantener flotando un poquito
-		hrp.Velocity = Vector3.new(0,0,0)
-	end)
-end
-
-local function stopNoclip(char)
-	noclip = false
-	if noclipConnection then noclipConnection:Disconnect() noclipConnection=nil end
-	for _, part in ipairs(char:GetDescendants()) do
-		if part:IsA("BasePart") then
-			part.CanCollide = true
-		end
-	end
-end
-
--- AntiKill + Heal
-local function startAntiKill(hum)
-	healLoop = RunService.Heartbeat:Connect(function()
-		if hum.Health < hum.MaxHealth then
-			hum.Health = hum.MaxHealth
-		end
-	end)
-end
-
-local function stopAntiKill()
-	if healLoop then healLoop:Disconnect() healLoop=nil end
-end
-
--- AntiVoid
-local function startAntiVoid(hrp)
-	antiVoidLoop = RunService.Heartbeat:Connect(function()
-		if hrp.Position.Y < -10 then
-			hrp.CFrame = CFrame.new(0, 50, 0)
-		end
-	end)
-end
-
-local function stopAntiVoid()
-	if antiVoidLoop then antiVoidLoop:Disconnect() antiVoidLoop=nil end
-end
-
--- ===================================================
--- 4. MODO OP
--- ===================================================
-local function startModifications()
-	isEnabled = true
-	local char, hum, hrp = getCharacterParts()
-
-	-- Speed bypass con CFrame
-	persistentLoop = RunService.Heartbeat:Connect(function()
-		if hum and hum.Health > 0 then
-			local moveDir = hum.MoveDirection
-			if moveDir.Magnitude > 0 then
-				hrp.CFrame = hrp.CFrame + (moveDir * (boostedWalkSpeed/100))
-			end
-		end
-	end)
-
-	-- Salto infinito
-	jumpConnection = UIS.JumpRequest:Connect(function()
-		if hum:GetState() ~= Enum.HumanoidStateType.Dead then
-			hum:ChangeState(Enum.HumanoidStateType.Jumping)
-		end
-	end)
-
-	-- Invisibilidad
-	setInvisible(char)
-
-	-- Noclip sin caer
-	startNoclip(char, hrp)
-
-	-- AntiKill
-	startAntiKill(hum)
-
-	-- AntiVoid
-	startAntiVoid(hrp)
-
-	-- GUI
-	TextButton.BackgroundColor3 = Color3.fromRGB(0, 170, 0) 
-	TextButton.Text = "ACTIVADO (OP)"
-	TextLabel.Text = "GOD, JUMP, INV, SPEED, FLY, NOCLIP"
-end
-
-local function stopModifications()
-	isEnabled = false
-	local char, hum, hrp = getCharacterParts()
-
-	if persistentLoop then persistentLoop:Disconnect() persistentLoop=nil end
-	if jumpConnection then jumpConnection:Disconnect() jumpConnection=nil end
-	if flyConnection then flyConnection:Disconnect() flyConnection=nil end
-	if noclipConnection then noclipConnection:Disconnect() noclipConnection=nil end
-
-	stopAntiKill()
-	stopAntiVoid()
-
-	setVisible(char)
-	stopNoclip(char)
-	stopFlying(hrp)
-
-	TextButton.BackgroundColor3 = Color3.fromRGB(255, 21, 0) 
-	TextButton.Text = "TOGGLE OP MODE"
-	TextLabel.Text = "OFFLINE"
-end
-
-local function toggle()
-	if isEnabled then
-		stopModifications()
-	else
-		startModifications()
-	end
-end
-
--- ===================================================
--- 5. EVENTOS
--- ===================================================
-TextButton.MouseButton1Click:Connect(toggle)
-
-FlyButton.MouseButton1Click:Connect(function()
-	local _, _, hrp = getCharacterParts()
-	if flying then
-		stopFlying(hrp)
-	else
-		startFlying(hrp)
-	end
-end)
-
-UIS.InputBegan:Connect(function(input, gpe)
-	if gpe then return end
-	if input.KeyCode == Enum.KeyCode.F and isEnabled then
-		local _, _, hrp = getCharacterParts()
-		if flying then
-			stopFlying(hrp)
-		else
-			startFlying(hrp)
-		end
-	end
-end)
-
-Player.CharacterAdded:Connect(function()
-	if isEnabled then
-		stopModifications()
-		task.wait(1)
-		startModifications()
-	end
+-- ⚡ Botón Start/Stop
+Button.MouseButton1Click:Connect(function()
+    if running then
+        running = false
+        Button.Text = "▶ Start AutoFishing"
+        Button.BackgroundColor3 = Color3.fromRGB(0,170,0)
+    else
+        running = true
+        Button.Text = "■ Stop AutoFishing"
+        Button.BackgroundColor3 = Color3.fromRGB(170,0,0)
+        local FishName = TextBox.Text ~= "" and TextBox.Text or "Mahi Mahi"
+        task.spawn(function() AutoFish(FishName) end)
+    end
 end)
