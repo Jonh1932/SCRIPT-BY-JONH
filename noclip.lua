@@ -1,67 +1,58 @@
 --[[ 
-Script completo: Crea GUI + Part en las piernas
-Activa/desactiva con un botón
+Script: Hover con botón GUI
+Activa = sube y flota, con movimiento
+Desactiva = vuelve al suelo
 ]]
 
 -- Servicios
 local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+
 local player = Players.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
 local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+local humanoid = character:WaitForChild("Humanoid")
 
 -- Variables
-local liftingPart = nil
 local enabled = false
+local connection
 
 -- Crear GUI
 local screenGui = Instance.new("ScreenGui")
-screenGui.Name = "LiftGui"
+screenGui.Name = "HoverGui"
 screenGui.ResetOnSpawn = false
 screenGui.Parent = player:WaitForChild("PlayerGui")
 
 local toggleButton = Instance.new("TextButton")
-toggleButton.Size = UDim2.new(0, 150, 0, 50)
-toggleButton.Position = UDim2.new(0.5, -75, 0.9, -25)
-toggleButton.Text = "Activar Elevación"
-toggleButton.BackgroundColor3 = Color3.fromRGB(50, 150, 250)
-toggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+toggleButton.Size = UDim2.new(0, 160, 0, 50)
+toggleButton.Position = UDim2.new(0.5, -80, 0.9, -25)
+toggleButton.Text = "Activar Hover"
+toggleButton.BackgroundColor3 = Color3.fromRGB(60, 200, 120)
+toggleButton.TextColor3 = Color3.new(1, 1, 1)
 toggleButton.Font = Enum.Font.SourceSansBold
 toggleButton.TextSize = 20
 toggleButton.Parent = screenGui
 
--- Función para crear el Part
-local function createLiftPart()
-	if liftingPart then liftingPart:Destroy() end
-	liftingPart = Instance.new("Part")
-	liftingPart.Size = Vector3.new(5, 2, 5)
-	liftingPart.Anchored = true
-	liftingPart.CanCollide = false
-	liftingPart.Transparency = 1 -- invisible
-	liftingPart.Parent = workspace
-end
-
--- Función para activar/desactivar
-local function toggleLift()
+-- Activar / Desactivar Hover
+local function toggleHover()
 	enabled = not enabled
+	
 	if enabled then
-		toggleButton.Text = "Desactivar Elevación"
-		createLiftPart()
-		-- Elevar suavemente
-		game:GetService("RunService").RenderStepped:Connect(function()
-			if enabled and liftingPart and humanoidRootPart then
-				-- Mantener el part debajo del jugador
-				liftingPart.CFrame = humanoidRootPart.CFrame * CFrame.new(0, -3, 0)
-				-- Mover jugador arriba suavemente
-				humanoidRootPart.Velocity = Vector3.new(0, 5, 0) -- leve empuje
+		toggleButton.Text = "Desactivar Hover"
+		-- Hacemos que el player flote
+		connection = RunService.RenderStepped:Connect(function()
+			if enabled and humanoidRootPart then
+				-- fuerza de flotación
+				humanoidRootPart.Velocity = Vector3.new(humanoidRootPart.Velocity.X, 4, humanoidRootPart.Velocity.Z)
 			end
 		end)
 	else
-		toggleButton.Text = "Activar Elevación"
-		if liftingPart then
-			liftingPart:Destroy()
-			liftingPart = nil
+		toggleButton.Text = "Activar Hover"
+		if connection then
+			connection:Disconnect()
+			connection = nil
 		end
 	end
 end
 
-toggleButton.MouseButton1Click:Connect(toggleLift)
+toggleButton.MouseButton1Click:Connect(toggleHover)
