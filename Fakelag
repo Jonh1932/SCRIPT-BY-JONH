@@ -1,29 +1,32 @@
--- GUI LocalScript
+--// Servicios
 local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
+
+--// Variables básicas del jugador
 local player = Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoid = character:WaitForChild("Humanoid")
+local rootPart = character:WaitForChild("HumanoidRootPart")
+local torso = character:FindFirstChild("UpperTorso") or character:WaitForChild("Torso")
 
--- Esperar al PlayerGui (a veces tarda en inicializarse)
-local playerGui = player:WaitForChild("PlayerGui")
-
--- Crear ScreenGui
+--// Crear GUI base
 local screenGui = Instance.new("ScreenGui")
-screenGui.Name = "QuantumGui"
+screenGui.Name = "LagGui"
 screenGui.ResetOnSpawn = false
-screenGui.Parent = playerGui
+screenGui.Parent = player:WaitForChild("PlayerGui")
 
--- Crear la bola flotante
+--// Bola flotante (movible)
 local dragBall = Instance.new("ImageButton")
 dragBall.Name = "DragBall"
 dragBall.Size = UDim2.new(0, 70, 0, 70)
 dragBall.Position = UDim2.new(0.9, 0, 0.8, 0)
 dragBall.BackgroundTransparency = 1
-dragBall.Image = "rbxassetid://10820112323"
+dragBall.Image = "rbxassetid://10820112323" -- icono o bola visual
 dragBall.Parent = screenGui
 
--- Hacer la bola movible
+--// Hacer la bola movible
 local dragging, dragInput, mousePos, framePos
-local UserInputService = game:GetService("UserInputService")
-
 dragBall.InputBegan:Connect(function(input)
 	if input.UserInputType == Enum.UserInputType.MouseButton1 then
 		dragging = true
@@ -54,17 +57,17 @@ dragBall.InputEnded:Connect(function(input)
 	end
 end)
 
--- Crear el panel
+--// Panel principal
 local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0, 280, 0, 160)
-frame.Position = UDim2.new(0.5, -140, 0.5, -80)
+frame.Size = UDim2.new(0, 250, 0, 130)
+frame.Position = UDim2.new(0.5, -125, 0.5, -65)
 frame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
 frame.BorderSizePixel = 0
 frame.Visible = false
 frame.Parent = screenGui
 Instance.new("UICorner", frame)
 
--- Borde rainbow
+--// Efecto rainbow animado en el borde
 local stroke = Instance.new("UIStroke")
 stroke.Thickness = 3
 stroke.Parent = frame
@@ -81,40 +84,96 @@ gradient.Color = ColorSequence.new{
 gradient.Rotation = 45
 gradient.Parent = stroke
 
--- Animar gradiente
 task.spawn(function()
-	while true do
-		for i = 0, 1, 0.01 do
-			gradient.Offset = Vector2.new(i, 0)
-			task.wait(0.03)
-		end
+	while task.wait(0.05) do
+		gradient.Offset = Vector2.new((tick() % 5) / 5, 0)
 	end
 end)
 
--- Botón “Activar Lag Falso”
+--// Botón "Activar Invisibility"
 local button = Instance.new("TextButton")
+button.Name = "InvisibilityButton"
 button.Size = UDim2.new(0.6, 0, 0.3, 0)
 button.Position = UDim2.new(0.2, 0, 0.35, 0)
-button.Text = "Activar Lag Falso"
 button.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
 button.TextColor3 = Color3.new(1, 1, 1)
+button.Text = "Activate"
 button.Font = Enum.Font.GothamBold
 button.TextScaled = true
+button.BorderSizePixel = 0
 Instance.new("UICorner", button)
 button.Parent = frame
 
--- Alternar visibilidad del GUI al hacer clic en la bola
+--// Abrir/Cerrar el panel con la bola
 dragBall.MouseButton1Click:Connect(function()
 	frame.Visible = not frame.Visible
 end)
 
--- Conectar con la herramienta Quantum Cloner
-button.MouseButton1Click:Connect(function()
-	local backpack = player:WaitForChild("Backpack")
-	local tool = backpack:FindFirstChild("Quantum Cloner") or player.Character:FindFirstChild("Quantum Cloner")
-	if tool then
-		tool:Activate()
+--// Función principal: Invisibilidad
+local function toggleInvisibility()
+	if button.Text == "Activate" then
+		button.Text = "Deactivate"
+
+		for _, part in ipairs(character:GetDescendants()) do
+			if part:IsA("BasePart") and part ~= torso then
+				part.Transparency = 0.8
+				if part:FindFirstChild("face") then
+					part.face.Transparency = 0.8
+				end
+			end
+		end
+
+		torso.Transparency = 0.4
+
+		for _, part in ipairs(character:GetDescendants()) do
+			if part:IsA("BasePart") and part ~= torso and part ~= rootPart then
+				local tweenInfo = TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+				local tween = TweenService:Create(part, tweenInfo, {Position = part.Position - Vector3.new(0, 3, 0)})
+				tween:Play()
+			end
+		end
+
+		local torsoWeld = Instance.new("WeldConstraint")
+		torsoWeld.Part0 = rootPart
+		torsoWeld.Part1 = torso
+		torsoWeld.Parent = torso
+		torso.Anchored = true
+		torso:SetAttribute("TorsoWeld", torsoWeld)
+
 	else
-		warn("Quantum Cloner no encontrado en la mochila del jugador.")
+		button.Text = "Activate"
+
+		for _, part in ipairs(character:GetDescendants()) do
+			if part:IsA("BasePart") then
+				part.Transparency = 0
+				if part:FindFirstChild("face") then
+					part.face.Transparency = 0
+				end
+			end
+		end
+
+		for _, part in ipairs(character:GetDescendants()) do
+			if part:IsA("BasePart") and part ~= rootPart then
+				local tweenInfo = TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+				local tween = TweenService:Create(part, tweenInfo, {Position = part.Position + Vector3.new(0, 3, 0)})
+				tween:Play()
+			end
+		end
+
+		local torsoWeld = torso:GetAttribute("TorsoWeld")
+		if torsoWeld then
+			torsoWeld:Destroy()
+			torso.Anchored = false
+		end
+	end
+end
+
+--// Conectar el botón
+button.MouseButton1Click:Connect(toggleInvisibility)
+
+--// Mantener tecla "Q" también funcional
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+	if not gameProcessed and input.KeyCode == Enum.KeyCode.Q then
+		toggleInvisibility()
 	end
 end)
