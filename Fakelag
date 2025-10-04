@@ -2,6 +2,7 @@
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
+local RunService = game:GetService("RunService")
 
 --// Variables básicas del jugador
 local player = Players.LocalPlayer
@@ -22,40 +23,45 @@ dragBall.Name = "DragBall"
 dragBall.Size = UDim2.new(0, 70, 0, 70)
 dragBall.Position = UDim2.new(0.9, 0, 0.8, 0)
 dragBall.BackgroundTransparency = 1
-dragBall.Image = "rbxassetid://10820112323" -- icono o bola visual
+dragBall.Image = "rbxassetid://10820112323"
 dragBall.Parent = screenGui
 
---// Hacer la bola movible
+-- Variables para el arrastre
 local dragging, dragInput, mousePos, framePos
-dragBall.InputBegan:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseButton1 then
-		dragging = true
-		mousePos = input.Position
-		framePos = dragBall.Position
-	end
-end)
 
-dragBall.InputChanged:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseMovement then
-		dragInput = input
-	end
-end)
-
-UserInputService.InputChanged:Connect(function(input)
-	if input == dragInput and dragging then
-		local delta = input.Position - mousePos
-		dragBall.Position = UDim2.new(
-			framePos.X.Scale, framePos.X.Offset + delta.X,
-			framePos.Y.Scale, framePos.Y.Offset + delta.Y
-		)
-	end
-end)
-
-dragBall.InputEnded:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseButton1 then
-		dragging = false
-	end
-end)
+-- Función para hacer la bola arrastrable
+local function setupDraggable(ball, frame)
+    ball.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = true
+            mousePos = input.Position
+            framePos = frame.Position
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    dragging = false
+                end
+            end)
+        end
+    end)
+    
+    ball.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement then
+            dragInput = input
+        end
+    end)
+    
+    UserInputService.InputChanged:Connect(function(input)
+        if input == dragInput and dragging then
+            local delta = input.Position - mousePos
+            frame.Position = UDim2.new(
+                framePos.X.Scale, 
+                framePos.X.Offset + delta.X,
+                framePos.Y.Scale, 
+                framePos.Y.Offset + delta.Y
+            )
+        end
+    end)
+end
 
 --// Panel principal
 local frame = Instance.new("Frame")
@@ -65,7 +71,14 @@ frame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
 frame.BorderSizePixel = 0
 frame.Visible = false
 frame.Parent = screenGui
-Instance.new("UICorner", frame)
+
+-- Hacer el panel arrastrable
+setupDraggable(dragBall, frame)
+
+-- Añadir esquinas redondeadas
+local uiCorner = Instance.new("UICorner")
+uiCorner.CornerRadius = UDim.new(0, 8)
+uiCorner.Parent = frame
 
 --// Efecto rainbow animado en el borde
 local stroke = Instance.new("UIStroke")
@@ -74,20 +87,21 @@ stroke.Parent = frame
 
 local gradient = Instance.new("UIGradient")
 gradient.Color = ColorSequence.new{
-	ColorSequenceKeypoint.new(0, Color3.fromRGB(255,0,0)),
-	ColorSequenceKeypoint.new(0.2, Color3.fromRGB(255,255,0)),
-	ColorSequenceKeypoint.new(0.4, Color3.fromRGB(0,255,0)),
-	ColorSequenceKeypoint.new(0.6, Color3.fromRGB(0,255,255)),
-	ColorSequenceKeypoint.new(0.8, Color3.fromRGB(0,0,255)),
-	ColorSequenceKeypoint.new(1, Color3.fromRGB(255,0,255))
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(255,0,0)),
+    ColorSequenceKeypoint.new(0.2, Color3.fromRGB(255,255,0)),
+    ColorSequenceKeypoint.new(0.4, Color3.fromRGB(0,255,0)),
+    ColorSequenceKeypoint.new(0.6, Color3.fromRGB(0,255,255)),
+    ColorSequenceKeypoint.new(0.8, Color3.fromRGB(0,0,255)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(255,0,255))
 }
 gradient.Rotation = 45
 gradient.Parent = stroke
 
+-- Animación del gradiente
 task.spawn(function()
-	while task.wait(0.05) do
-		gradient.Offset = Vector2.new((tick() % 5) / 5, 0)
-	end
+    while task.wait(0.05) do
+        gradient.Offset = Vector2.new((tick() % 5) / 5, 0)
+    end
 end)
 
 --// Botón "Activar Invisibility"
@@ -101,79 +115,128 @@ button.Text = "Activate"
 button.Font = Enum.Font.GothamBold
 button.TextScaled = true
 button.BorderSizePixel = 0
-Instance.new("UICorner", button)
 button.Parent = frame
 
---// Abrir/Cerrar el panel con la bola
-dragBall.MouseButton1Click:Connect(function()
-	frame.Visible = not frame.Visible
-end)
+-- Añadir esquinas redondeadas al botón
+local buttonCorner = Instance.new("UICorner")
+buttonCorner.CornerRadius = UDim.new(0, 6)
+buttonCorner.Parent = button
 
---// Función principal: Invisibilidad
+-- Variables para la invisibilidad
+local isInvisible = false
+local originalPositions = {}
+local originalTransparency = {}
+local torsoWeld
+
+--// Función para manejar la visibilidad
 local function toggleInvisibility()
-	if button.Text == "Activate" then
-		button.Text = "Deactivate"
-
-		for _, part in ipairs(character:GetDescendants()) do
-			if part:IsA("BasePart") and part ~= torso then
-				part.Transparency = 0.8
-				if part:FindFirstChild("face") then
-					part.face.Transparency = 0.8
-				end
-			end
-		end
-
-		torso.Transparency = 0.4
-
-		for _, part in ipairs(character:GetDescendants()) do
-			if part:IsA("BasePart") and part ~= torso and part ~= rootPart then
-				local tweenInfo = TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-				local tween = TweenService:Create(part, tweenInfo, {Position = part.Position - Vector3.new(0, 3, 0)})
-				tween:Play()
-			end
-		end
-
-		local torsoWeld = Instance.new("WeldConstraint")
-		torsoWeld.Part0 = rootPart
-		torsoWeld.Part1 = torso
-		torsoWeld.Parent = torso
-		torso.Anchored = true
-		torso:SetAttribute("TorsoWeld", torsoWeld)
-
-	else
-		button.Text = "Activate"
-
-		for _, part in ipairs(character:GetDescendants()) do
-			if part:IsA("BasePart") then
-				part.Transparency = 0
-				if part:FindFirstChild("face") then
-					part.face.Transparency = 0
-				end
-			end
-		end
-
-		for _, part in ipairs(character:GetDescendants()) do
-			if part:IsA("BasePart") and part ~= rootPart then
-				local tweenInfo = TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-				local tween = TweenService:Create(part, tweenInfo, {Position = part.Position + Vector3.new(0, 3, 0)})
-				tween:Play()
-			end
-		end
-
-		local torsoWeld = torso:GetAttribute("TorsoWeld")
-		if torsoWeld then
-			torsoWeld:Destroy()
-			torso.Anchored = false
-		end
-	end
+    if isInvisible then
+        -- Restaurar visibilidad
+        button.Text = "Activate"
+        
+        -- Restaurar transparencia
+        for part, transparency in pairs(originalTransparency) do
+            if part and part.Parent then
+                part.Transparency = transparency
+                if part:FindFirstChild("face") then
+                    part.face.Transparency = transparency
+                end
+            end
+        end
+        
+        -- Restaurar posiciones
+        for part, position in pairs(originalPositions) do
+            if part and part.Parent and part ~= rootPart then
+                local tweenInfo = TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+                local tween = TweenService:Create(part, tweenInfo, {Position = position})
+                tween:Play()
+            end
+        end
+        
+        -- Eliminar el weld del torso
+        if torsoWeld then
+            torsoWeld:Destroy()
+            torsoWeld = nil
+        end
+        
+        torso.Anchored = false
+    else
+        -- Activar invisibilidad
+        button.Text = "Deactivate"
+        
+        -- Guardar transparencias originales
+        originalTransparency = {}
+        for _, part in ipairs(character:GetDescendants()) do
+            if part:IsA("BasePart") then
+                originalTransparency[part] = part.Transparency
+            end
+        end
+        
+        -- Guardar posiciones originales
+        originalPositions = {}
+        for _, part in ipairs(character:GetDescendants()) do
+            if part:IsA("BasePart") then
+                originalPositions[part] = part.Position
+            end
+        end
+        
+        -- Aplicar transparencia
+        for part, _ in pairs(originalTransparency) do
+            if part ~= torso and part ~= rootPart then
+                part.Transparency = 0.8
+                if part:FindFirstChild("face") then
+                    part.face.Transparency = 0.8
+                end
+            else
+                part.Transparency = 0.4
+            end
+        end
+        
+        -- Bajar las partes del cuerpo
+        for part, _ in pairs(originalPositions) do
+            if part ~= torso and part ~= rootPart and part.Parent then
+                local tweenInfo = TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+                local tween = TweenService:Create(part, tweenInfo, {Position = part.Position - Vector3.new(0, 3, 0)})
+                tween:Play()
+            end
+        end
+        
+        -- Anclar el torso en su posición
+        torsoWeld = Instance.new("WeldConstraint")
+        torsoWeld.Part0 = rootPart
+        torsoWeld.Part1 = torso
+        torsoWeld.Parent = torso
+        torso.Anchored = true
+    end
+    
+    isInvisible = not isInvisible
 end
 
 --// Conectar el botón
 button.MouseButton1Click:Connect(toggleInvisibility)
 
---// Mantener tecla "Q" también funcional
+--// Toggle con la tecla Q
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
-	if not gameProcessed and input.KeyCode == Enum.KeyCode.Q then
-		toggleInvisibility()
-	end
+    if not gameProcessed and input.KeyCode == Enum.KeyCode.Q then
+        toggleInvisibility()
+    end
+end)
+
+--// Abrir/cerrar el panel con la bola
+dragBall.MouseButton1Click:Connect(function()
+    frame.Visible = not frame.Visible
+end)
+
+-- Manejar la recarga del personaje
+player.CharacterAdded:Connect(function(newCharacter)
+    character = newCharacter
+    humanoid = character:WaitForChild("Humanoid")
+    rootPart = character:WaitForChild("HumanoidRootPart")
+    torso = character:FindFirstChild("UpperTorso") or character:WaitForChild("Torso")
+    
+    -- Resetear el estado de invisibilidad
+    isInvisible = false
+    originalPositions = {}
+    originalTransparency = {}
+    torsoWeld = nil
 end)
