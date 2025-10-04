@@ -1,12 +1,10 @@
 --// Services
 local Players = game:GetService("Players")
-local UserInputService = game:GetService("UserInputService")
-local TweenService = game:GetService("TweenService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 --// Create RemoteEvent if it doesn't exist
 local remoteEvent = Instance.new("RemoteEvent")
-remoteEvent.Name = "SkinnyModeMobile"
+remoteEvent.Name = "SkinnyMode"
 remoteEvent.Parent = ReplicatedStorage
 
 --// Player variables
@@ -15,18 +13,12 @@ local character = player.Character or player.CharacterAdded:Wait()
 local humanoid = character:WaitForChild("Humanoid")
 local rootPart = character:WaitForChild("HumanoidRootPart")
 
---// Create GUI
-local screenGui = Instance.new("ScreenGui")
-screenGui.Name = "MobileSkinnyGui"
-screenGui.ResetOnSpawn = false
-screenGui.Parent = player:WaitForChild("PlayerGui")
-
---// Floating red button
+--// Create a simple button
 local button = Instance.new("TextButton")
-button.Name = "FloatButton"
-button.Size = UDim2.new(0, 80, 0, 80) -- Bigger for mobile
-button.Position = UDim2.new(0.8, 0, 0.6, 0)
-button.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
+button.Name = "SkinnyButton"
+button.Size = UDim2.new(0, 100, 0, 100)
+button.Position = UDim2.new(0.8, 0, 0.7, 0)
+button.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
 button.Text = "SKINNY"
 button.TextColor3 = Color3.new(1, 1, 1)
 button.TextScaled = true
@@ -39,94 +31,30 @@ local uiCorner = Instance.new("UICorner")
 uiCorner.CornerRadius = UDim.new(1, 0)
 uiCorner.Parent = button
 
--- Add glow
-local uiStroke = Instance.new("UIStroke")
-uiStroke.Thickness = 4
-uiStroke.Color = Color3.fromRGB(255, 150, 150)
-uiStroke.Parent = button
-
--- Add touch controls for mobile
-local function setupTouchControls()
-    local touchStartPos = nil
-    local buttonStartPos = nil
-    local isDragging = false
-    
-    button.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.Touch then
-            touchStartPos = input.Position
-            buttonStartPos = button.Position
-            isDragging = false
-            
-            -- Visual feedback
-            button.BackgroundTransparency = 0.2
-        end
-    end)
-    
-    button.InputChanged:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.Touch then
-            isDragging = true
-        end
-    end)
-    
-    button.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.Touch then
-            button.BackgroundTransparency = 0
-            
-            if not isDragging then
-                -- Toggle skinny mode
-                toggleSkinny()
-            end
-        end
-    end)
-    
-    -- Handle touch movement
-    UserInputService.TouchMoved:Connect(function(input, processed)
-        if not processed and touchStartPos and buttonStartPos then
-            local delta = input.Position - touchStartPos
-            button.Position = UDim2.new(
-                buttonStartPos.X.Scale,
-                buttonStartPos.X.Offset + delta.X,
-                buttonStartPos.Y.Scale,
-                buttonStartPos.Y.Offset + delta.Y
-            )
-        end
-    end)
-end
+-- Add to screen
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "SkinnyGui"
+screenGui.ResetOnSpawn = false
+button.Parent = screenGui
+screenGui.Parent = player:WaitForChild("PlayerGui")
 
 -- Toggle skinny mode
 local isSkinny = false
 
 local function toggleSkinny()
     isSkinny = not isSkinny
-    
-    if isSkinny then
-        button.BackgroundColor3 = Color3.fromRGB(50, 200, 50) -- Green when active
-        uiStroke.Color = Color3.fromRGB(150, 255, 150)
-    else
-        button.BackgroundColor3 = Color3.fromRGB(255, 50, 50) -- Red when inactive
-        uiStroke.Color = Color3.fromRGB(255, 150, 150)
-    end
-    
-    -- Tell the server to make this character skinny for everyone
     remoteEvent:FireServer(isSkinny)
+    button.BackgroundColor3 = isSkinny and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 0, 0)
 end
 
--- Add button to screen
-button.Parent = screenGui
-
--- Setup touch controls
-setupTouchControls()
+-- Connect button
+button.MouseButton1Click:Connect(toggleSkinny)
 
 -- Handle character respawn
 player.CharacterAdded:Connect(function(newCharacter)
     character = newCharacter
     humanoid = character:WaitForChild("Humanoid")
     rootPart = character:WaitForChild("HumanoidRootPart")
-    
-    -- Reset button state
-    isSkinny = false
-    button.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
-    uiStroke.Color = Color3.fromRGB(255, 150, 150)
 end)
 
 -- Server script (runs on the server)
@@ -137,28 +65,13 @@ if game:GetService("RunService"):IsServer() then
         for _, part in ipairs(character:GetDescendants()) do
             if part:IsA("BasePart") then
                 if isSkinny then
-                    -- Save original size if not already saved
-                    if not part:GetAttribute("OriginalSize") then
-                        part:SetAttribute("OriginalSize", part.Size)
-                    end
-                    
-                    -- Make parts skinny (only reduce width and depth)
-                    local originalSize = part:GetAttribute("OriginalSize")
-                    part.Size = Vector3.new(
-                        math.max(0.1, originalSize.X * 0.3),  -- 30% of original width
-                        originalSize.Y,                       -- Keep original height
-                        math.max(0.1, originalSize.Z * 0.3)   -- 30% of original depth
-                    )
-                    
-                    -- Disable collision
+                    -- Make parts skinny
+                    part.Size = Vector3.new(0.5, part.Size.Y, 0.5)
                     part.CanCollide = false
                 else
-                    -- Restore original size and collision
-                    if part:GetAttribute("OriginalSize") then
-                        local originalSize = part:GetAttribute("OriginalSize")
-                        part.Size = originalSize
-                        part.CanCollide = true
-                    end
+                    -- Reset to default size
+                    part.Size = Vector3.new(2, 2, 1) -- Adjust these values as needed
+                    part.CanCollide = true
                 end
             end
         end
@@ -170,10 +83,9 @@ if game:GetService("RunService"):IsServer() then
         end
     end)
 
-    -- Handle players joining
+    -- Reset on respawn
     Players.PlayerAdded:Connect(function(player)
         player.CharacterAdded:Connect(function(character)
-            -- Reset character when respawning
             makeSkinny(character, false)
         end)
     end)
