@@ -1,12 +1,11 @@
 --[[ 
 Fundador JonhScripts
-Panel + Círculo Mágico Movible + Elevador Mejorado
+Círculo Movible + Panel Rainbow + Elevador Potente
 ]]
 
 -- Servicios
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
-local TweenService = game:GetService("TweenService")
 
 local player = Players.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
@@ -16,6 +15,7 @@ local humanoid = character:WaitForChild("Humanoid")
 -- Variables
 local enabled = false
 local connection
+local jumpConnection
 
 -- Crear GUI principal
 local screenGui = Instance.new("ScreenGui")
@@ -23,7 +23,7 @@ screenGui.Name = "ElevadorGui"
 screenGui.ResetOnSpawn = false
 screenGui.Parent = player:WaitForChild("PlayerGui")
 
--- Círculo inicial
+-- Círculo movible
 local circleButton = Instance.new("TextButton")
 circleButton.Size = UDim2.new(0, 70, 0, 70)
 circleButton.Position = UDim2.new(0.1, 0, 0.4, 0)
@@ -41,7 +41,7 @@ circleCorner.Parent = circleButton
 
 -- Panel oculto
 local panel = Instance.new("Frame")
-panel.Size = UDim2.new(0, 250, 0, 150)
+panel.Size = UDim2.new(0, 260, 0, 160)
 panel.Position = UDim2.new(0.4, 0, 0.4, 0)
 panel.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
 panel.Visible = false
@@ -67,7 +67,7 @@ gradient.Color = ColorSequence.new{
 }
 gradient.Parent = panel
 
--- Animación del gradiente (loop)
+-- Animación rainbow
 task.spawn(function()
 	while true do
 		for i = 0, 1, 0.01 do
@@ -107,21 +107,25 @@ circleButton.MouseButton1Click:Connect(function()
 	panel.Visible = not panel.Visible
 end)
 
--- Función Hover/Jump
+-- Función Hover/Jump más rápido
 local function toggleHover()
 	enabled = not enabled
 	if enabled then
 		toggleButton.Text = "Desactivar Elevador"
-		-- Mantener flotando
+		-- Mantener flotando con fuerza
 		connection = RunService.RenderStepped:Connect(function()
 			if enabled and humanoidRootPart then
-				humanoidRootPart.Velocity = Vector3.new(humanoidRootPart.Velocity.X, 6, humanoidRootPart.Velocity.Z)
+				humanoidRootPart.Velocity = Vector3.new(
+					humanoidRootPart.Velocity.X,
+					18, -- fuerza de subida (rápido)
+					humanoidRootPart.Velocity.Z
+				)
 			end
 		end)
-		-- Super salto
-		humanoid.Jumping:Connect(function()
+		-- Super salto potente
+		jumpConnection = humanoid.Jumping:Connect(function()
 			if enabled then
-				humanoidRootPart.Velocity = humanoidRootPart.Velocity + Vector3.new(0, 40, 0)
+				humanoidRootPart.Velocity = humanoidRootPart.Velocity + Vector3.new(0, 60, 0)
 			end
 		end)
 	else
@@ -129,6 +133,10 @@ local function toggleHover()
 		if connection then
 			connection:Disconnect()
 			connection = nil
+		end
+		if jumpConnection then
+			jumpConnection:Disconnect()
+			jumpConnection = nil
 		end
 	end
 end
