@@ -1,0 +1,171 @@
+--// Tu código original (Quantum Cloner)
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
+
+local player = Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoid = character:WaitForChild("Humanoid")
+local rootPart = character:WaitForChild("HumanoidRootPart")
+
+local tool = Instance.new("Tool")
+tool.Name = "Quantum Cloner"
+tool.RequiresHandle = false
+tool.CanBeDropped = false
+
+local function onActivated()
+	if not tool.Enabled then return end
+	tool.Enabled = false
+
+	local originalCFrame = rootPart.CFrame
+
+	local function createFakeCharacter()
+		local fakeChar = character:Clone()
+		for _, v in pairs(fakeChar:GetDescendants()) do
+			if v:IsA("LocalScript") or v:IsA("Script") then
+				v:Destroy()
+			end
+		end
+		local fakeHumanoid = fakeChar:FindFirstChildOfClass("Humanoid")
+		if fakeHumanoid then
+			fakeHumanoid.WalkSpeed = 0
+			fakeHumanoid.JumpPower = 0
+		end
+		fakeChar:SetPrimaryPartCFrame(originalCFrame)
+		fakeChar.Parent = workspace
+		if fakeChar:FindFirstChild("HumanoidRootPart") then
+			fakeChar.HumanoidRootPart.CFrame = CFrame.new(
+				originalCFrame.Position,
+				originalCFrame.Position + rootPart.CFrame.LookVector
+			)
+		end
+		return fakeChar
+	end
+
+	local fakeCharacter = createFakeCharacter()
+	ReplicatedStorage.Packages.Net["RE/QuantumCloner/OnTeleport"]:FireServer()
+
+	task.wait(5)
+	if fakeCharacter and fakeCharacter.Parent then
+		fakeCharacter:Destroy()
+	end
+
+	tool.Enabled = true
+end
+
+tool.Activated:Connect(onActivated)
+tool.Parent = player:WaitForChild("Backpack")
+
+---------------------------------------------------------------------
+--// INTERFAZ (GUI)
+---------------------------------------------------------------------
+
+-- ScreenGui
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "QuantumGui"
+screenGui.ResetOnSpawn = false
+screenGui.Parent = player:WaitForChild("PlayerGui")
+
+-- Bola movible
+local dragBall = Instance.new("ImageButton")
+dragBall.Name = "DragBall"
+dragBall.Size = UDim2.new(0, 70, 0, 70)
+dragBall.Position = UDim2.new(0.9, 0, 0.8, 0)
+dragBall.BackgroundTransparency = 1
+dragBall.Image = "rbxassetid://10820112323" -- ícono circular o cambia a otro asset si prefieres
+dragBall.Parent = screenGui
+
+-- Hacerla movible
+local dragging = false
+local dragInput, mousePos, framePos
+dragBall.InputBegan:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 then
+		dragging = true
+		mousePos = input.Position
+		framePos = dragBall.Position
+	end
+end)
+dragBall.InputChanged:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseMovement then
+		dragInput = input
+	end
+end)
+game:GetService("UserInputService").InputChanged:Connect(function(input)
+	if input == dragInput and dragging then
+		local delta = input.Position - mousePos
+		dragBall.Position = UDim2.new(
+			framePos.X.Scale,
+			framePos.X.Offset + delta.X,
+			framePos.Y.Scale,
+			framePos.Y.Offset + delta.Y
+		)
+	end
+end)
+dragBall.InputEnded:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 then
+		dragging = false
+	end
+end)
+
+-- Ventana principal (Frame oculto)
+local frame = Instance.new("Frame")
+frame.Size = UDim2.new(0, 280, 0, 160)
+frame.Position = UDim2.new(0.5, -140, 0.5, -80)
+frame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+frame.BorderSizePixel = 0
+frame.Visible = false
+frame.Parent = screenGui
+frame.BackgroundTransparency = 0.1
+frame.ClipsDescendants = true
+
+-- Bordes redondeados
+Instance.new("UICorner", frame)
+
+-- Borde de líneas arcoíris
+local stroke = Instance.new("UIStroke")
+stroke.Thickness = 3
+stroke.Parent = frame
+
+local gradient = Instance.new("UIGradient")
+gradient.Color = ColorSequence.new{
+	ColorSequenceKeypoint.new(0, Color3.fromRGB(255,0,0)),
+	ColorSequenceKeypoint.new(0.2, Color3.fromRGB(255,255,0)),
+	ColorSequenceKeypoint.new(0.4, Color3.fromRGB(0,255,0)),
+	ColorSequenceKeypoint.new(0.6, Color3.fromRGB(0,255,255)),
+	ColorSequenceKeypoint.new(0.8, Color3.fromRGB(0,0,255)),
+	ColorSequenceKeypoint.new(1, Color3.fromRGB(255,0,255))
+}
+gradient.Rotation = 45
+gradient.Parent = stroke
+
+-- Animar gradiente (efecto rainbow)
+task.spawn(function()
+	while true do
+		for i = 0, 1, 0.005 do
+			gradient.Offset = Vector2.new(i, 0)
+			task.wait(0.03)
+		end
+	end
+end)
+
+-- Botón "Activar Lag Falso"
+local button = Instance.new("TextButton")
+button.Size = UDim2.new(0.6, 0, 0.3, 0)
+button.Position = UDim2.new(0.2, 0, 0.35, 0)
+button.Text = "Activar Lag Falso"
+button.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+button.TextColor3 = Color3.new(1, 1, 1)
+button.Font = Enum.Font.GothamBold
+button.TextScaled = true
+button.Parent = frame
+Instance.new("UICorner", button)
+
+-- Cuando se hace clic en la bola, abre/cierra el GUI
+dragBall.MouseButton1Click:Connect(function()
+	frame.Visible = not frame.Visible
+end)
+
+-- Cuando se presiona el botón, ejecuta el clonador
+button.MouseButton1Click:Connect(function()
+	onActivated()
+end)
