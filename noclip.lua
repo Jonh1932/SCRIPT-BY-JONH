@@ -1,6 +1,6 @@
 --[[ 
 Fundador JonhScripts
-Círculo Movible + Panel Rainbow + Elevador Potente
+Círculo Movible + Panel Rainbow + Elevador Potente + ESP Players
 ]]
 
 -- Servicios
@@ -13,8 +13,9 @@ local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
 local humanoid = character:WaitForChild("Humanoid")
 
 -- Variables
-local enabled = false
-local connection
+local elevadorEnabled = false
+local espEnabled = false
+local elevadorConnection
 local jumpConnection
 
 -- Crear GUI principal
@@ -34,14 +35,13 @@ circleButton.Parent = screenGui
 circleButton.Active = true
 circleButton.Draggable = true
 
--- Redondear círculo
 local circleCorner = Instance.new("UICorner")
-circleCorner.CornerRadius = UDim.new(1, 0) -- círculo perfecto
+circleCorner.CornerRadius = UDim.new(1, 0)
 circleCorner.Parent = circleButton
 
 -- Panel oculto
 local panel = Instance.new("Frame")
-panel.Size = UDim2.new(0, 260, 0, 160)
+panel.Size = UDim2.new(0, 260, 0, 200)
 panel.Position = UDim2.new(0.4, 0, 0.4, 0)
 panel.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
 panel.Visible = false
@@ -49,7 +49,6 @@ panel.Active = true
 panel.Draggable = true
 panel.Parent = screenGui
 
--- Bordes redondeados
 local panelCorner = Instance.new("UICorner")
 panelCorner.CornerRadius = UDim.new(0, 20)
 panelCorner.Parent = panel
@@ -67,7 +66,6 @@ gradient.Color = ColorSequence.new{
 }
 gradient.Parent = panel
 
--- Animación rainbow
 task.spawn(function()
 	while true do
 		for i = 0, 1, 0.01 do
@@ -87,58 +85,106 @@ title.Font = Enum.Font.GothamBold
 title.TextScaled = true
 title.Parent = panel
 
--- Botón de activación
-local toggleButton = Instance.new("TextButton")
-toggleButton.Size = UDim2.new(0, 180, 0, 50)
-toggleButton.Position = UDim2.new(0.5, -90, 0.6, -25)
-toggleButton.Text = "Activar Elevador"
-toggleButton.BackgroundColor3 = Color3.fromRGB(60, 200, 120)
-toggleButton.TextColor3 = Color3.new(1,1,1)
-toggleButton.Font = Enum.Font.GothamBold
-toggleButton.TextSize = 20
-toggleButton.Parent = panel
+-- Botón elevador
+local elevadorButton = Instance.new("TextButton")
+elevadorButton.Size = UDim2.new(0, 180, 0, 40)
+elevadorButton.Position = UDim2.new(0.5, -90, 0.4, -20)
+elevadorButton.Text = "Activar Elevador"
+elevadorButton.BackgroundColor3 = Color3.fromRGB(60, 200, 120)
+elevadorButton.TextColor3 = Color3.new(1,1,1)
+elevadorButton.Font = Enum.Font.GothamBold
+elevadorButton.TextSize = 20
+elevadorButton.Parent = panel
 
-local toggleCorner = Instance.new("UICorner")
-toggleCorner.CornerRadius = UDim.new(0, 15)
-toggleCorner.Parent = toggleButton
+local elevadorCorner = Instance.new("UICorner")
+elevadorCorner.CornerRadius = UDim.new(0, 15)
+elevadorCorner.Parent = elevadorButton
+
+-- Botón ESP
+local espButton = Instance.new("TextButton")
+espButton.Size = UDim2.new(0, 180, 0, 40)
+espButton.Position = UDim2.new(0.5, -90, 0.75, -20)
+espButton.Text = "Activar ESP"
+espButton.BackgroundColor3 = Color3.fromRGB(100, 150, 250)
+espButton.TextColor3 = Color3.new(1,1,1)
+espButton.Font = Enum.Font.GothamBold
+espButton.TextSize = 20
+espButton.Parent = panel
+
+local espCorner = Instance.new("UICorner")
+espCorner.CornerRadius = UDim.new(0, 15)
+espCorner.Parent = espButton
 
 -- Mostrar/Ocultar panel al hacer clic en el círculo
 circleButton.MouseButton1Click:Connect(function()
 	panel.Visible = not panel.Visible
 end)
 
--- Función Hover/Jump más rápido
-local function toggleHover()
-	enabled = not enabled
-	if enabled then
-		toggleButton.Text = "Desactivar Elevador"
-		-- Mantener flotando con fuerza
-		connection = RunService.RenderStepped:Connect(function()
-			if enabled and humanoidRootPart then
+-- Función Elevador
+local function toggleElevador()
+	elevadorEnabled = not elevadorEnabled
+	if elevadorEnabled then
+		elevadorButton.Text = "Desactivar Elevador"
+		elevadorConnection = RunService.RenderStepped:Connect(function()
+			if elevadorEnabled and humanoidRootPart then
 				humanoidRootPart.Velocity = Vector3.new(
 					humanoidRootPart.Velocity.X,
-					18, -- fuerza de subida (rápido)
+					18,
 					humanoidRootPart.Velocity.Z
 				)
 			end
 		end)
-		-- Super salto potente
 		jumpConnection = humanoid.Jumping:Connect(function()
-			if enabled then
+			if elevadorEnabled then
 				humanoidRootPart.Velocity = humanoidRootPart.Velocity + Vector3.new(0, 60, 0)
 			end
 		end)
 	else
-		toggleButton.Text = "Activar Elevador"
-		if connection then
-			connection:Disconnect()
-			connection = nil
-		end
-		if jumpConnection then
-			jumpConnection:Disconnect()
-			jumpConnection = nil
-		end
+		elevadorButton.Text = "Activar Elevador"
+		if elevadorConnection then elevadorConnection:Disconnect() end
+		if jumpConnection then jumpConnection:Disconnect() end
+	end
+end
+elevadorButton.MouseButton1Click:Connect(toggleElevador)
+
+-- ESP simple (Highlight)
+local function applyESP(char)
+	if not char:FindFirstChild("HumanoidRootPart") then return end
+	if not char:FindFirstChild("Highlight") then
+		local highlight = Instance.new("Highlight")
+		highlight.FillTransparency = 1
+		highlight.OutlineColor = Color3.fromRGB(0, 255, 0)
+		highlight.OutlineTransparency = 0
+		highlight.Parent = char
 	end
 end
 
-toggleButton.MouseButton1Click:Connect(toggleHover)
+local function toggleESP()
+	espEnabled = not espEnabled
+	if espEnabled then
+		espButton.Text = "Desactivar ESP"
+		-- aplicar a todos los jugadores
+		for _,plr in pairs(Players:GetPlayers()) do
+			if plr ~= player and plr.Character then
+				applyESP(plr.Character)
+			end
+		end
+		-- aplicar a futuros jugadores
+		Players.PlayerAdded:Connect(function(plr)
+			plr.CharacterAdded:Connect(function(char)
+				if espEnabled then
+					applyESP(char)
+				end
+			end)
+		end)
+	else
+		espButton.Text = "Activar ESP"
+		-- quitar highlight
+		for _,plr in pairs(Players:GetPlayers()) do
+			if plr.Character and plr.Character:FindFirstChild("Highlight") then
+				plr.Character.Highlight:Destroy()
+			end
+		end
+	end
+end
+espButton.MouseButton1Click:Connect(toggleESP)
