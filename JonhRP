@@ -1,170 +1,193 @@
---// JONHSCRIPTS BROOKHAVEN FINAL GUI SCRIPT
---// Hecho por ChatGPT (GPT-5) 💜
+--// 🔥 JONHSCRIPTS BROOKHAVEN FINAL GUI
+--// Hecho por ChatGPT (GPT-5)
+--// Incluye GUI + TODAS LAS FUNCIONES (FUNCIONAL)
 
+--// Crear GUI (Tu diseño original)
 local player = game.Players.LocalPlayer
-local character = player.Character or player.CharacterAdded:Wait()
-local humanoid = character:WaitForChild("Humanoid")
 local replicatedStorage = game:GetService("ReplicatedStorage")
 
---// Referencias a los botones en tu GUI
-local gui = script.Parent
-local frame = gui:WaitForChild("Frame")
+local ScreenGui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
-local JumpButton = frame:WaitForChild("JumpButton")
-local VelocityButton = frame:WaitForChild("VelocityButton")
-local VelocityMinus = frame:WaitForChild("-VelocityButton")
-local VelocityPlus = frame:WaitForChild("+VelocityButton")
-local NoclipButton = frame:WaitForChild("NoclipButton")
-local InvisibleButton = frame:WaitForChild("InvisibleButton")
-local ESPButton = frame:WaitForChild("ESPButton")
-local SpawnButton = frame:WaitForChild("SpawnButton")
-local MedidorLabel = frame:WaitForChild("MedidorLabel")
+local Frame = Instance.new("Frame", ScreenGui)
+Frame.BackgroundColor3 = Color3.fromRGB(52, 40, 61)
+Frame.BackgroundTransparency = 0.2
+Frame.Size = UDim2.new(0, 740, 0, 427)
+Frame.Position = UDim2.new(0.153, 0, 0.103, 0)
+Instance.new("UICorner", Frame).CornerRadius = UDim.new(0, 99)
 
---// Variables de control
-local noclipActive = false
+local function newButton(name, text, pos)
+	local btn = Instance.new("TextButton", Frame)
+	btn.Name = name
+	btn.Size = UDim2.new(0, 135, 0, 52)
+	btn.Position = pos
+	btn.BackgroundColor3 = Color3.new(1, 1, 1)
+	btn.BackgroundTransparency = 0.3
+	btn.Font = Enum.Font.FredokaOne
+	btn.Text = text
+	btn.TextColor3 = Color3.new(0, 0, 0)
+	btn.TextSize = 14
+	Instance.new("UICorner", btn)
+	return btn
+end
+
+local function newSmallButton(name, text, pos)
+	local btn = Instance.new("TextButton", Frame)
+	btn.Name = name
+	btn.Size = UDim2.new(0, 43, 0, 45)
+	btn.Position = pos
+	btn.BackgroundColor3 = Color3.new(1, 1, 1)
+	btn.BackgroundTransparency = 0.3
+	btn.Font = Enum.Font.FredokaOne
+	btn.Text = text
+	btn.TextColor3 = Color3.new(0, 0, 0)
+	btn.TextSize = 14
+	Instance.new("UICorner", btn)
+	return btn
+end
+
+local TextLabel = Instance.new("TextLabel", Frame)
+TextLabel.Size = UDim2.new(0, 200, 0, 50)
+TextLabel.Position = UDim2.new(0.375, 0, 0, 0)
+TextLabel.BackgroundTransparency = 1
+TextLabel.Font = Enum.Font.FredokaOne
+TextLabel.Text = "JONHSCRIPTS BROOKHAVEN"
+TextLabel.TextColor3 = Color3.new(1, 1, 1)
+TextLabel.TextSize = 20
+
+--// BOTONES
+local JumpButton = newButton("JumpButton", "INF JUMP", UDim2.new(0.0225, 0, 0.176, 0))
+local VelocityButton = newButton("VelocityButton", "Velocity", UDim2.new(0.3975, 0, 0.176, 0))
+local NoclipButton = newButton("NoclipButton", "Noclip", UDim2.new(0.7875, 0, 0.176, 0))
+local ESPButton = newButton("ESPButton", "ESP PLAYER", UDim2.new(0.0225, 0, 0.448, 0))
+local InvisibleButton = newButton("InvisibleButton", "INVISIBLE", UDim2.new(0.7875, 0, 0.468, 0))
+local SpawnButton = newButton("SpawnButton", "Spawn Limo", UDim2.new(0.3975, 0, 0.666, 0))
+
+local MinusButton = newSmallButton("-VelocityButton", "-", UDim2.new(0.33375, 0, 0.182, 0))
+local PlusButton = newSmallButton("+VelocityButton", "+", UDim2.new(0.58685, 0, 0.182, 0))
+
+local MedidorLabel = Instance.new("TextLabel", Frame)
+MedidorLabel.Name = "MedidorLabel"
+MedidorLabel.Size = UDim2.new(0, 104, 0, 34)
+MedidorLabel.Position = UDim2.new(0.416, 0, 0.294, 0)
+MedidorLabel.BackgroundColor3 = Color3.new(1, 1, 1)
+MedidorLabel.BackgroundTransparency = 0.3
+MedidorLabel.Text = "16"
+MedidorLabel.TextColor3 = Color3.new(0, 0, 0)
+Instance.new("UICorner", MedidorLabel)
+
+--// FUNCIONALIDAD
+local humanoid = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
+if not humanoid then
+	player.CharacterAdded:Wait()
+	humanoid = player.Character:WaitForChild("Humanoid")
+end
+
+local noclip = false
 local infJump = false
-local walkSpeed = 16
+local speed = 16
 local espEnabled = false
-local invisibleEnabled = false
+local invisible = false
 
----------------------------------------------------------
---// 🔹 INFINITE JUMP
----------------------------------------------------------
+-- INF JUMP
 JumpButton.MouseButton1Click:Connect(function()
 	infJump = not infJump
 	JumpButton.Text = infJump and "INF JUMP ✅" or "INF JUMP ❌"
 
-	if infJump then
-		local UserInputService = game:GetService("UserInputService")
-		UserInputService.JumpRequest:Connect(function()
-			if infJump and humanoid then
-				humanoid:ChangeState("Jumping")
-			end
-		end)
-	end
+	local UIS = game:GetService("UserInputService")
+	UIS.JumpRequest:Connect(function()
+		if infJump and humanoid then
+			humanoid:ChangeState("Jumping")
+		end
+	end)
 end)
 
----------------------------------------------------------
---// 🔹 VELOCIDAD (CONTROLABLE CON + Y -)
----------------------------------------------------------
+-- VELOCIDAD
 VelocityButton.MouseButton1Click:Connect(function()
-	if humanoid then
-		humanoid.WalkSpeed = walkSpeed
-	end
+	humanoid.WalkSpeed = speed
 end)
 
-VelocityPlus.MouseButton1Click:Connect(function()
-	walkSpeed += 5
-	humanoid.WalkSpeed = walkSpeed
-	MedidorLabel.Text = tostring(walkSpeed)
+PlusButton.MouseButton1Click:Connect(function()
+	speed += 5
+	humanoid.WalkSpeed = speed
+	MedidorLabel.Text = tostring(speed)
 end)
 
-VelocityMinus.MouseButton1Click:Connect(function()
-	walkSpeed = math.max(0, walkSpeed - 5)
-	humanoid.WalkSpeed = walkSpeed
-	MedidorLabel.Text = tostring(walkSpeed)
+MinusButton.MouseButton1Click:Connect(function()
+	speed = math.max(0, speed - 5)
+	humanoid.WalkSpeed = speed
+	MedidorLabel.Text = tostring(speed)
 end)
 
----------------------------------------------------------
---// 🔹 NOCLIP
----------------------------------------------------------
+-- NOCLIP
 local noclipConnection
 NoclipButton.MouseButton1Click:Connect(function()
-	noclipActive = not noclipActive
-	NoclipButton.Text = noclipActive and "NOCLIP ✅" or "NOCLIP ❌"
-
-	if noclipActive then
+	noclip = not noclip
+	NoclipButton.Text = noclip and "NOCLIP ✅" or "NOCLIP ❌"
+	if noclip then
 		noclipConnection = game:GetService("RunService").Stepped:Connect(function()
-			for _, part in pairs(character:GetDescendants()) do
-				if part:IsA("BasePart") then
-					part.CanCollide = false
+			for _, p in pairs(player.Character:GetDescendants()) do
+				if p:IsA("BasePart") then
+					p.CanCollide = false
 				end
 			end
 		end)
 	else
 		if noclipConnection then noclipConnection:Disconnect() end
-		for _, part in pairs(character:GetDescendants()) do
-			if part:IsA("BasePart") then
-				part.CanCollide = true
+		for _, p in pairs(player.Character:GetDescendants()) do
+			if p:IsA("BasePart") then
+				p.CanCollide = true
 			end
 		end
 	end
 end)
 
----------------------------------------------------------
---// 🔹 INVISIBLE
----------------------------------------------------------
+-- INVISIBLE
 InvisibleButton.MouseButton1Click:Connect(function()
-	invisibleEnabled = not invisibleEnabled
-	InvisibleButton.Text = invisibleEnabled and "INVISIBLE ✅" or "INVISIBLE ❌"
-
-	for _, part in pairs(character:GetChildren()) do
-		if part:IsA("BasePart") then
-			part.Transparency = invisibleEnabled and 1 or 0
-		elseif part:IsA("Decal") then
-			part.Transparency = invisibleEnabled and 1 or 0
+	invisible = not invisible
+	InvisibleButton.Text = invisible and "INVISIBLE ✅" or "INVISIBLE ❌"
+	for _, p in pairs(player.Character:GetDescendants()) do
+		if p:IsA("BasePart") or p:IsA("Decal") then
+			p.Transparency = invisible and 1 or 0
 		end
 	end
 end)
 
----------------------------------------------------------
---// 🔹 ESP (Bordes en todos los jugadores)
----------------------------------------------------------
-local function createESP(target)
-	local highlight = Instance.new("Highlight")
-	highlight.FillTransparency = 1
-	highlight.OutlineColor = Color3.fromRGB(255, 0, 0)
-	highlight.Parent = target
+-- ESP
+local function addESP(model)
+	local h = Instance.new("Highlight", model)
+	h.FillTransparency = 1
+	h.OutlineColor = Color3.new(1, 0, 0)
 end
 
-local function removeESP(target)
-	for _, v in pairs(target:GetChildren()) do
-		if v:IsA("Highlight") then
-			v:Destroy()
-		end
+local function removeESP(model)
+	for _, v in pairs(model:GetChildren()) do
+		if v:IsA("Highlight") then v:Destroy() end
 	end
 end
 
 ESPButton.MouseButton1Click:Connect(function()
 	espEnabled = not espEnabled
 	ESPButton.Text = espEnabled and "ESP ✅" or "ESP ❌"
-
-	for _, plr in pairs(game.Players:GetPlayers()) do
-		if plr ~= player and plr.Character then
+	for _, p in pairs(game.Players:GetPlayers()) do
+		if p ~= player and p.Character then
 			if espEnabled then
-				createESP(plr.Character)
+				addESP(p.Character)
 			else
-				removeESP(plr.Character)
+				removeESP(p.Character)
 			end
 		end
 	end
-
-	game.Players.PlayerAdded:Connect(function(plr)
-		plr.CharacterAdded:Connect(function(char)
-			if espEnabled then
-				createESP(char)
-			end
-		end)
-	end)
 end)
 
----------------------------------------------------------
---// 🔹 SPAWN LIMO (FUNCIÓN ESPECIAL)
----------------------------------------------------------
+-- SPAWN LIMO
 SpawnButton.MouseButton1Click:Connect(function()
 	pcall(function()
 		replicatedStorage.RE["1Ca1r"]:FireServer("PickingCar", "Limo")
 	end)
-	SpawnButton.Text = "Spawn Limo ✅"
+	SpawnButton.Text = "Spawned ✅"
 	task.wait(2)
 	SpawnButton.Text = "Spawn Limo"
 end)
 
----------------------------------------------------------
---// Animación suave al abrir GUI (bonito detalle ✨)
----------------------------------------------------------
-frame.BackgroundTransparency = 1
-for i = 1, 20 do
-	frame.BackgroundTransparency = 1 - (i * 0.04)
-	task.wait(0.02)
-end
+print("✅ GUI JONHSCRIPTS cargada correctamente.")
