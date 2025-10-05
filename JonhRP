@@ -1,4 +1,4 @@
---==[ JONHSCRIPTS BROOKHAVEN GUI (FINAL + ANIMADO) ]==--
+--==[ JONHSCRIPTS BROOKHAVEN GUI - FINAL FIXED VERSION 💪]==--
 
 local Player = game.Players.LocalPlayer
 local Character = Player.Character or Player.CharacterAdded:Wait()
@@ -6,9 +6,11 @@ local Humanoid = Character:WaitForChild("Humanoid")
 local TweenService = game:GetService("TweenService")
 local UIS = game:GetService("UserInputService")
 
---==================== GUI BASE ====================--
-
+-------------------------------------------------------
+-- 🧱 CREACIÓN DE GUI
+-------------------------------------------------------
 local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "JONHSCRIPTS_GUI"
 ScreenGui.Parent = Player:WaitForChild("PlayerGui")
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 ScreenGui.ResetOnSpawn = false
@@ -23,12 +25,9 @@ Frame.Size = UDim2.new(0, 800, 0, 500)
 Frame.Active = true
 Frame.Draggable = true
 Frame.Visible = false
+Instance.new("UICorner", Frame).CornerRadius = UDim.new(0, 99)
 
-local UICorner = Instance.new("UICorner", Frame)
-UICorner.CornerRadius = UDim.new(0, 99)
-
---==================== TÍTULO ====================--
-
+-- Título
 local Title = Instance.new("TextLabel")
 Title.Parent = Frame
 Title.BackgroundTransparency = 1
@@ -39,8 +38,9 @@ Title.Text = "JONHSCRIPTS BROOKHAVEN"
 Title.TextColor3 = Color3.new(1, 1, 1)
 Title.TextSize = 20
 
---==================== BOTONES ====================--
-
+-------------------------------------------------------
+-- 🧩 BOTONES GENERALES
+-------------------------------------------------------
 local function makeButton(name, pos, text)
 	local b = Instance.new("TextButton")
 	b.Name = name
@@ -53,23 +53,26 @@ local function makeButton(name, pos, text)
 	b.Text = text
 	b.TextColor3 = Color3.new(0, 0, 0)
 	b.TextSize = 14
-	local c = Instance.new("UICorner", b)
+	Instance.new("UICorner", b)
 	return b
 end
 
 local JumpButton = makeButton("JumpButton", UDim2.new(0.0225, 0, 0.176, 0), "INF JUMP")
 local VelocityButton = makeButton("VelocityButton", UDim2.new(0.3975, 0, 0.176, 0), "Velocity")
-local VelocityMinus = makeButton("VelocityMinus", UDim2.new(0.333, 0, 0.182, 0), "-")
-VelocityMinus.Size = UDim2.new(0, 43, 0, 45)
-local VelocityPlus = makeButton("VelocityPlus", UDim2.new(0.578, 0, 0.182, 0), "+")
-VelocityPlus.Size = UDim2.new(0, 43, 0, 45)
 local NoclipButton = makeButton("NoclipButton", UDim2.new(0.7875, 0, 0.176, 0), "Noclip")
 local ESPButton = makeButton("ESPButton", UDim2.new(0.0225, 0, 0.45, 0), "ESP PLAYER")
 local InvisibleButton = makeButton("InvisibleButton", UDim2.new(0.7875, 0, 0.468, 0), "INVISIBLE")
 local SpawnButton = makeButton("SpawnButton", UDim2.new(0.3975, 0, 0.666, 0), "Spawn Limo")
 
---==================== MEDIDOR ====================--
+-- Botones +/- velocidad
+local VelocityMinus = makeButton("VelocityMinus", UDim2.new(0.333, 0, 0.182, 0), "-")
+VelocityMinus.Size = UDim2.new(0, 43, 0, 45)
+local VelocityPlus = makeButton("VelocityPlus", UDim2.new(0.578, 0, 0.182, 0), "+")
+VelocityPlus.Size = UDim2.new(0, 43, 0, 45)
 
+-------------------------------------------------------
+-- 📟 MEDIDOR DE VELOCIDAD (ahora DENTRO del Frame)
+-------------------------------------------------------
 local MedidorLabel = Instance.new("TextLabel")
 MedidorLabel.Parent = Frame
 MedidorLabel.Position = UDim2.new(0.45, 0, 0.29, 0)
@@ -82,8 +85,9 @@ MedidorLabel.Text = "0"
 MedidorLabel.TextSize = 14
 Instance.new("UICorner", MedidorLabel)
 
---==================== BOLA AZUL (TOGGLE) ====================--
-
+-------------------------------------------------------
+-- 🔵 BOLA TOGGLE (ahora 100% funcional)
+-------------------------------------------------------
 local ToggleBall = Instance.new("TextButton")
 ToggleBall.Parent = ScreenGui
 ToggleBall.Size = UDim2.new(0, 50, 0, 50)
@@ -92,26 +96,34 @@ ToggleBall.BackgroundColor3 = Color3.fromRGB(0, 102, 255)
 ToggleBall.Text = ""
 ToggleBall.Active = true
 ToggleBall.Draggable = true
-ToggleBall.ZIndex = 10
+ToggleBall.ZIndex = 999 -- 🔼 más alto que todo
 Instance.new("UICorner", ToggleBall).CornerRadius = UDim.new(1, 0)
 
---==================== ANIMACIÓN DE APERTURA ====================--
+-- 🚫 Deshabilitamos cualquier bloqueo de clics
+Frame.ClipsDescendants = false
+ToggleBall.AutoButtonColor = true
+MedidorLabel.Active = false
+MedidorLabel.ZIndex = 1
 
+-------------------------------------------------------
+-- ✨ ANIMACIÓN DE APERTURA (Slide + Fade)
+-------------------------------------------------------
 local function animateFrame(show)
-	local goal = {}
-	if show then
-		goal.Size = UDim2.new(0, 800, 0, 500)
-		goal.Position = UDim2.new(0.15, 0, 0.1, 0)
-	else
-		goal.Size = UDim2.new(0, 800, 0, 0)
-		goal.Position = UDim2.new(0.15, 0, 0.6, 0)
-	end
-	local tween = TweenService:Create(Frame, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), goal)
-	tween:Play()
 	if show then
 		Frame.Visible = true
+		Frame.BackgroundTransparency = 1
+		local tween1 = TweenService:Create(Frame, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+			BackgroundTransparency = 0.2,
+			Position = UDim2.new(0.15, 0, 0.1, 0)
+		})
+		tween1:Play()
 	else
-		task.wait(0.4)
+		local tween2 = TweenService:Create(Frame, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+			BackgroundTransparency = 1,
+			Position = UDim2.new(0.15, 0, 0.5, 0)
+		})
+		tween2:Play()
+		task.wait(0.3)
 		Frame.Visible = false
 	end
 end
@@ -124,7 +136,9 @@ ToggleBall.MouseButton1Click:Connect(function()
 	end
 end)
 
---==================== FUNCIONES ====================--
+-------------------------------------------------------
+-- ⚙️ FUNCIONES
+-------------------------------------------------------
 
 -- INF JUMP
 local infJumpEnabled = false
@@ -164,7 +178,7 @@ end)
 
 VelocityPlus.MouseButton1Click:Connect(function()
 	if velocityEnabled then
-		currentSpeed = currentSpeed + 5
+		currentSpeed += 5
 		Humanoid.WalkSpeed = currentSpeed
 		updateMedidor()
 	end
@@ -172,7 +186,7 @@ end)
 
 VelocityMinus.MouseButton1Click:Connect(function()
 	if velocityEnabled and currentSpeed > 5 then
-		currentSpeed = currentSpeed - 5
+		currentSpeed -= 5
 		Humanoid.WalkSpeed = currentSpeed
 		updateMedidor()
 	end
@@ -186,7 +200,7 @@ NoclipButton.MouseButton1Click:Connect(function()
 end)
 
 game:GetService("RunService").Stepped:Connect(function()
-	if noclipEnabled and Character and Humanoid then
+	if noclipEnabled and Character then
 		for _, part in pairs(Character:GetChildren()) do
 			if part:IsA("BasePart") then
 				part.CanCollide = false
@@ -197,11 +211,9 @@ end)
 
 -- INVISIBLE
 InvisibleButton.MouseButton1Click:Connect(function()
-	if Character and Character:FindFirstChild("HumanoidRootPart") then
-		for _, part in pairs(Character:GetDescendants()) do
-			if part:IsA("BasePart") or part:IsA("Decal") then
-				part.Transparency = 1
-			end
+	for _, part in pairs(Character:GetDescendants()) do
+		if part:IsA("BasePart") or part:IsA("Decal") then
+			part.Transparency = 1
 		end
 	end
 end)
@@ -218,15 +230,11 @@ end)
 ESPButton.MouseButton1Click:Connect(function()
 	for _, plr in pairs(game.Players:GetPlayers()) do
 		if plr ~= Player and plr.Character then
-			for _, part in pairs(plr.Character:GetChildren()) do
-				if part:IsA("BasePart") then
-					local highlight = Instance.new("Highlight")
-					highlight.Parent = part
-					highlight.FillTransparency = 1
-					highlight.OutlineColor = Color3.fromRGB(0, 255, 0)
-					highlight.OutlineTransparency = 0
-				end
-			end
+			local highlight = Instance.new("Highlight")
+			highlight.Parent = plr.Character
+			highlight.FillTransparency = 1
+			highlight.OutlineColor = Color3.fromRGB(0, 255, 0)
+			highlight.OutlineTransparency = 0
 		end
 	end
 end)
