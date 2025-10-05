@@ -1,150 +1,53 @@
---==[ JONHSCRIPTS BROOKHAVEN GUI - FINAL FIXED VERSION 💪]==--
+--// JONHSCRIPTS BROOKHAVEN FULL GUI SCRIPT
+--// Creado para funcionar con tu GUI existente de Roblox Studio
 
+-------------------------------------------------------
+-- VARIABLES PRINCIPALES
+-------------------------------------------------------
 local Player = game.Players.LocalPlayer
 local Character = Player.Character or Player.CharacterAdded:Wait()
 local Humanoid = Character:WaitForChild("Humanoid")
-local TweenService = game:GetService("TweenService")
 local UIS = game:GetService("UserInputService")
+local RS = game:GetService("ReplicatedStorage")
 
 -------------------------------------------------------
--- 🧱 CREACIÓN DE GUI
+-- REFERENCIAS A TU GUI
 -------------------------------------------------------
-local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "JONHSCRIPTS_GUI"
-ScreenGui.Parent = Player:WaitForChild("PlayerGui")
-ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-ScreenGui.ResetOnSpawn = false
+local gui = Player:WaitForChild("PlayerGui"):WaitForChild("ScreenGui")
+local frame = gui:WaitForChild("Frame")
+local toggleBall = gui:WaitForChild("ToggleBall")
 
--- Frame principal
-local Frame = Instance.new("Frame")
-Frame.Parent = ScreenGui
-Frame.BackgroundColor3 = Color3.fromRGB(52, 40, 61)
-Frame.BackgroundTransparency = 0.2
-Frame.Position = UDim2.new(0.15, 0, 0.1, 0)
-Frame.Size = UDim2.new(0, 800, 0, 500)
-Frame.Active = true
-Frame.Draggable = true
-Frame.Visible = false
-Instance.new("UICorner", Frame).CornerRadius = UDim.new(0, 99)
-
--- Título
-local Title = Instance.new("TextLabel")
-Title.Parent = Frame
-Title.BackgroundTransparency = 1
-Title.Position = UDim2.new(0.35, 0, 0, 0)
-Title.Size = UDim2.new(0, 300, 0, 50)
-Title.Font = Enum.Font.FredokaOne
-Title.Text = "JONHSCRIPTS BROOKHAVEN"
-Title.TextColor3 = Color3.new(1, 1, 1)
-Title.TextSize = 20
+local infJumpButton = frame:WaitForChild("JumpButton")
+local velButton = frame:WaitForChild("VelocityButton")
+local velPlus = frame:WaitForChild("+VelocityButton")
+local velMinus = frame:WaitForChild("-VelocityButton")
+local noclipButton = frame:WaitForChild("NoclipButton")
+local invisibleButton = frame:WaitForChild("InvisibleButton")
+local espButton = frame:WaitForChild("ESPButton")
+local spawnButton = frame:WaitForChild("SpawnButton")
+local medidor = gui:WaitForChild("MedidorLabel")
 
 -------------------------------------------------------
--- 🧩 BOTONES GENERALES
+-- 🔵 TOGGLE BALL (Abrir/Cerrar GUI)
 -------------------------------------------------------
-local function makeButton(name, pos, text)
-	local b = Instance.new("TextButton")
-	b.Name = name
-	b.Parent = Frame
-	b.Size = UDim2.new(0, 135, 0, 52)
-	b.Position = pos
-	b.BackgroundColor3 = Color3.new(1, 1, 1)
-	b.BackgroundTransparency = 0.3
-	b.Font = Enum.Font.FredokaOne
-	b.Text = text
-	b.TextColor3 = Color3.new(0, 0, 0)
-	b.TextSize = 14
-	Instance.new("UICorner", b)
-	return b
-end
+toggleBall.Active = true
+toggleBall.Draggable = true
+frame.Visible = false
 
-local JumpButton = makeButton("JumpButton", UDim2.new(0.0225, 0, 0.176, 0), "INF JUMP")
-local VelocityButton = makeButton("VelocityButton", UDim2.new(0.3975, 0, 0.176, 0), "Velocity")
-local NoclipButton = makeButton("NoclipButton", UDim2.new(0.7875, 0, 0.176, 0), "Noclip")
-local ESPButton = makeButton("ESPButton", UDim2.new(0.0225, 0, 0.45, 0), "ESP PLAYER")
-local InvisibleButton = makeButton("InvisibleButton", UDim2.new(0.7875, 0, 0.468, 0), "INVISIBLE")
-local SpawnButton = makeButton("SpawnButton", UDim2.new(0.3975, 0, 0.666, 0), "Spawn Limo")
-
--- Botones +/- velocidad
-local VelocityMinus = makeButton("VelocityMinus", UDim2.new(0.333, 0, 0.182, 0), "-")
-VelocityMinus.Size = UDim2.new(0, 43, 0, 45)
-local VelocityPlus = makeButton("VelocityPlus", UDim2.new(0.578, 0, 0.182, 0), "+")
-VelocityPlus.Size = UDim2.new(0, 43, 0, 45)
-
--------------------------------------------------------
--- 📟 MEDIDOR DE VELOCIDAD (ahora DENTRO del Frame)
--------------------------------------------------------
-local MedidorLabel = Instance.new("TextLabel")
-MedidorLabel.Parent = Frame
-MedidorLabel.Position = UDim2.new(0.45, 0, 0.29, 0)
-MedidorLabel.Size = UDim2.new(0, 104, 0, 34)
-MedidorLabel.BackgroundColor3 = Color3.new(1, 1, 1)
-MedidorLabel.BackgroundTransparency = 0.3
-MedidorLabel.Font = Enum.Font.SourceSans
-MedidorLabel.TextColor3 = Color3.new(0, 0, 0)
-MedidorLabel.Text = "0"
-MedidorLabel.TextSize = 14
-Instance.new("UICorner", MedidorLabel)
-
--------------------------------------------------------
--- 🔵 BOLA TOGGLE (ahora 100% funcional)
--------------------------------------------------------
-local ToggleBall = Instance.new("TextButton")
-ToggleBall.Parent = ScreenGui
-ToggleBall.Size = UDim2.new(0, 50, 0, 50)
-ToggleBall.Position = UDim2.new(0.05, 0, 0.5, 0)
-ToggleBall.BackgroundColor3 = Color3.fromRGB(0, 102, 255)
-ToggleBall.Text = ""
-ToggleBall.Active = true
-ToggleBall.Draggable = true
-ToggleBall.ZIndex = 999 -- 🔼 más alto que todo
-Instance.new("UICorner", ToggleBall).CornerRadius = UDim.new(1, 0)
-
--- 🚫 Deshabilitamos cualquier bloqueo de clics
-Frame.ClipsDescendants = false
-ToggleBall.AutoButtonColor = true
-MedidorLabel.Active = false
-MedidorLabel.ZIndex = 1
-
--------------------------------------------------------
--- ✨ ANIMACIÓN DE APERTURA (Slide + Fade)
--------------------------------------------------------
-local function animateFrame(show)
-	if show then
-		Frame.Visible = true
-		Frame.BackgroundTransparency = 1
-		local tween1 = TweenService:Create(Frame, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-			BackgroundTransparency = 0.2,
-			Position = UDim2.new(0.15, 0, 0.1, 0)
-		})
-		tween1:Play()
-	else
-		local tween2 = TweenService:Create(Frame, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-			BackgroundTransparency = 1,
-			Position = UDim2.new(0.15, 0, 0.5, 0)
-		})
-		tween2:Play()
-		task.wait(0.3)
-		Frame.Visible = false
-	end
-end
-
-ToggleBall.MouseButton1Click:Connect(function()
-	if Frame.Visible then
-		animateFrame(false)
-	else
-		animateFrame(true)
+toggleBall.InputBegan:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 then
+		frame.Visible = not frame.Visible
 	end
 end)
 
 -------------------------------------------------------
--- ⚙️ FUNCIONES
+-- 🦘 INF JUMP
 -------------------------------------------------------
-
--- INF JUMP
 local infJumpEnabled = false
-JumpButton.MouseButton1Click:Connect(function()
+
+infJumpButton.MouseButton1Click:Connect(function()
 	infJumpEnabled = not infJumpEnabled
-	JumpButton.Text = infJumpEnabled and "INF JUMP [ON]" or "INF JUMP [OFF]"
+	infJumpButton.Text = infJumpEnabled and "INF JUMP [ON]" or "INF JUMP [OFF]"
 end)
 
 UIS.JumpRequest:Connect(function()
@@ -153,30 +56,32 @@ UIS.JumpRequest:Connect(function()
 	end
 end)
 
--- VELOCITY
+-------------------------------------------------------
+-- 🏃 VELOCITY (+ / -)
+-------------------------------------------------------
 local velocityEnabled = false
 local currentSpeed = 16
 local defaultSpeed = 25
 
 local function updateMedidor()
-	MedidorLabel.Text = tostring(currentSpeed)
+	medidor.Text = tostring(currentSpeed)
 end
 
-VelocityButton.MouseButton1Click:Connect(function()
+velButton.MouseButton1Click:Connect(function()
 	velocityEnabled = not velocityEnabled
 	if velocityEnabled then
 		currentSpeed = defaultSpeed
 		Humanoid.WalkSpeed = currentSpeed
-		VelocityButton.Text = "Velocity [ON]"
+		velButton.Text = "Velocity [ON]"
 	else
 		currentSpeed = 16
 		Humanoid.WalkSpeed = currentSpeed
-		VelocityButton.Text = "Velocity [OFF]"
+		velButton.Text = "Velocity [OFF]"
 	end
 	updateMedidor()
 end)
 
-VelocityPlus.MouseButton1Click:Connect(function()
+velPlus.MouseButton1Click:Connect(function()
 	if velocityEnabled then
 		currentSpeed += 5
 		Humanoid.WalkSpeed = currentSpeed
@@ -184,7 +89,7 @@ VelocityPlus.MouseButton1Click:Connect(function()
 	end
 end)
 
-VelocityMinus.MouseButton1Click:Connect(function()
+velMinus.MouseButton1Click:Connect(function()
 	if velocityEnabled and currentSpeed > 5 then
 		currentSpeed -= 5
 		Humanoid.WalkSpeed = currentSpeed
@@ -192,16 +97,19 @@ VelocityMinus.MouseButton1Click:Connect(function()
 	end
 end)
 
--- NOCLIP
+-------------------------------------------------------
+-- 🚪 NOCLIP
+-------------------------------------------------------
 local noclipEnabled = false
-NoclipButton.MouseButton1Click:Connect(function()
+
+noclipButton.MouseButton1Click:Connect(function()
 	noclipEnabled = not noclipEnabled
-	NoclipButton.Text = noclipEnabled and "Noclip [ON]" or "Noclip [OFF]"
+	noclipButton.Text = noclipEnabled and "Noclip [ON]" or "Noclip [OFF]"
 end)
 
 game:GetService("RunService").Stepped:Connect(function()
-	if noclipEnabled and Character then
-		for _, part in pairs(Character:GetChildren()) do
+	if noclipEnabled then
+		for _, part in ipairs(Character:GetChildren()) do
 			if part:IsA("BasePart") then
 				part.CanCollide = false
 			end
@@ -209,34 +117,83 @@ game:GetService("RunService").Stepped:Connect(function()
 	end
 end)
 
--- INVISIBLE
-InvisibleButton.MouseButton1Click:Connect(function()
-	for _, part in pairs(Character:GetDescendants()) do
-		if part:IsA("BasePart") or part:IsA("Decal") then
-			part.Transparency = 1
+-------------------------------------------------------
+-- 👻 INVISIBLE
+-------------------------------------------------------
+local invisibleEnabled = false
+
+invisibleButton.MouseButton1Click:Connect(function()
+	invisibleEnabled = not invisibleEnabled
+	for _, part in ipairs(Character:GetChildren()) do
+		if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
+			part.Transparency = invisibleEnabled and 1 or 0
 		end
 	end
+	invisibleButton.Text = invisibleEnabled and "Invisible [ON]" or "Invisible [OFF]"
 end)
 
--- SPAWN LIMO
-SpawnButton.MouseButton1Click:Connect(function()
-	local rep = game:GetService("ReplicatedStorage")
-	if rep:FindFirstChild("RE") and rep.RE:FindFirstChild("1Ca1r") then
-		rep.RE["1Ca1r"]:FireServer("PickingCar", "Limo")
-	end
-end)
+-------------------------------------------------------
+-- 🧍 ESP (Bordes para jugadores)
+-------------------------------------------------------
+local espEnabled = false
 
--- ESP
-ESPButton.MouseButton1Click:Connect(function()
-	for _, plr in pairs(game.Players:GetPlayers()) do
-		if plr ~= Player and plr.Character then
+local function createESP(player)
+	if player == Player then return end
+	if not player.Character then return end
+
+	for _, part in ipairs(player.Character:GetChildren()) do
+		if part:IsA("BasePart") then
 			local highlight = Instance.new("Highlight")
-			highlight.Parent = plr.Character
+			highlight.Parent = part
 			highlight.FillTransparency = 1
 			highlight.OutlineColor = Color3.fromRGB(0, 255, 0)
-			highlight.OutlineTransparency = 0
+		end
+	end
+end
+
+local function removeESP(player)
+	if not player.Character then return end
+	for _, obj in ipairs(player.Character:GetDescendants()) do
+		if obj:IsA("Highlight") then
+			obj:Destroy()
+		end
+	end
+end
+
+espButton.MouseButton1Click:Connect(function()
+	espEnabled = not espEnabled
+	espButton.Text = espEnabled and "ESP [ON]" or "ESP [OFF]"
+
+	for _, p in ipairs(game.Players:GetPlayers()) do
+		if espEnabled then
+			createESP(p)
+		else
+			removeESP(p)
 		end
 	end
 end)
 
+game.Players.PlayerAdded:Connect(function(p)
+	if espEnabled then
+		p.CharacterAdded:Connect(function()
+			task.wait(1)
+			createESP(p)
+		end)
+	end
+end)
+
+-------------------------------------------------------
+-- 🚗 SPAWN LIMO
+-------------------------------------------------------
+spawnButton.MouseButton1Click:Connect(function()
+	RS.RE["1Ca1r"]:FireServer("PickingCar", "Limo")
+	spawnButton.Text = "Spawned ✅"
+	task.wait(2)
+	spawnButton.Text = "Spawn Limo"
+end)
+
+-------------------------------------------------------
+-- 🔧 INICIALIZACIÓN
+-------------------------------------------------------
 updateMedidor()
+print("✅ JONHSCRIPTS BROOKHAVEN GUI ACTIVADO")
