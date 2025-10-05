@@ -1,15 +1,10 @@
---[[ 
-    JONHSCRIPTS BROOKHAVEN GUI
-    Autor: Tú
-    Versión: Clean con Toggle y Velocity ajustable
---]]
+-- JONHSCRIPTS BROOKHAVEN GUI (LIMPIO + Velocity Ajustable + Toggle Bola Azul)
 
--- Variables principales
 local Player = game.Players.LocalPlayer
 local Character = Player.Character or Player.CharacterAdded:Wait()
 local Humanoid = Character:WaitForChild("Humanoid")
 
--- GUI creada por Gui2Lua
+-- CREACIÓN DE GUI (tu diseño exportado de Gui2Lua)
 local ScreenGui = Instance.new("ScreenGui")
 local Frame = Instance.new("Frame")
 local UICorner = Instance.new("UICorner")
@@ -18,35 +13,26 @@ local JumpButton = Instance.new("TextButton")
 local UICorner_2 = Instance.new("UICorner")
 local VelocityButton = Instance.new("TextButton")
 local UICorner_3 = Instance.new("UICorner")
-local NoclipButton = Instance.new("TextButton")
-local UICorner_4 = Instance.new("UICorner")
-local NoclipButton_2 = Instance.new("TextButton")
-local UICorner_5 = Instance.new("UICorner")
-local ESPButton = Instance.new("TextButton")
-local UICorner_6 = Instance.new("UICorner")
-local InvisibleButton = Instance.new("TextButton")
-local UICorner_7 = Instance.new("UICorner")
-local SpawnButton = Instance.new("TextButton")
-local UICorner_8 = Instance.new("UICorner")
-local VelocityButton_2 = Instance.new("TextButton") -- "-"
+local VelocityButton_2 = Instance.new("TextButton") -- -
 local UICorner_9 = Instance.new("UICorner")
-local VelocityButton_3 = Instance.new("TextButton") -- "+"
+local VelocityButton_3 = Instance.new("TextButton") -- +
 local UICorner_10 = Instance.new("UICorner")
 local MedidorLabel = Instance.new("TextLabel")
 local UICorner_11 = Instance.new("UICorner")
 
--- GUI
+-- ScreenGui
 ScreenGui.Parent = Player:WaitForChild("PlayerGui")
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
+-- Frame
 Frame.Parent = ScreenGui
-Frame.BackgroundColor3 = Color3.new(0.203, 0.156, 0.239)
+Frame.BackgroundColor3 = Color3.fromRGB(52, 40, 61)
 Frame.BackgroundTransparency = 0.2
 Frame.Position = UDim2.new(0.15, 0, 0.1, 0)
 Frame.Size = UDim2.new(0, 800, 0, 500)
 Frame.Active = true
 Frame.Draggable = true
-Frame.Visible = false -- Oculto hasta que se toque la bola
+Frame.Visible = false -- 🔴 OCULTO al inicio
 
 UICorner.Parent = Frame
 UICorner.CornerRadius = UDim.new(0, 99)
@@ -61,7 +47,7 @@ TextLabel.Text = "JONHSCRIPTS BROOKHAVEN"
 TextLabel.TextColor3 = Color3.new(1, 1, 1)
 TextLabel.TextSize = 20
 
--- INF JUMP
+-- JumpButton
 JumpButton.Parent = Frame
 JumpButton.Position = UDim2.new(0.0225, 0, 0.176, 0)
 JumpButton.Size = UDim2.new(0, 135, 0, 52)
@@ -72,7 +58,7 @@ JumpButton.Font = Enum.Font.FredokaOne
 JumpButton.TextSize = 14
 UICorner_2.Parent = JumpButton
 
--- VELOCITY
+-- VelocityButton
 VelocityButton.Parent = Frame
 VelocityButton.Position = UDim2.new(0.3975, 0, 0.176, 0)
 VelocityButton.Size = UDim2.new(0, 135, 0, 52)
@@ -97,13 +83,13 @@ VelocityButton_3.Size = UDim2.new(0, 43, 0, 45)
 VelocityButton_3.Text = "+"
 UICorner_10.Parent = VelocityButton_3
 
--- Medidor velocidad
+-- MedidorLabel
 MedidorLabel.Parent = ScreenGui
 MedidorLabel.Position = UDim2.new(0.45, 0, 0.29, 0)
 MedidorLabel.Size = UDim2.new(0, 104, 0, 34)
 MedidorLabel.BackgroundColor3 = Color3.new(1, 1, 1)
 MedidorLabel.BackgroundTransparency = 0.3
-MedidorLabel.Text = "0"
+MedidorLabel.Text = "0" -- 🔴 ahora sí arranca en 0
 MedidorLabel.TextSize = 14
 UICorner_11.Parent = MedidorLabel
 
@@ -126,9 +112,9 @@ ToggleBall.InputBegan:Connect(function(input)
 	end
 end)
 
-----------------------------------------------------------------
+-------------------------------------------------------
 -- FUNCIONES
-----------------------------------------------------------------
+-------------------------------------------------------
 
 -- INF JUMP
 local infJumpEnabled = false
@@ -145,8 +131,8 @@ end)
 
 -- VELOCITY
 local velocityEnabled = false
-local currentSpeed = 16 -- default roblox walk
-local defaultSpeed = 25 -- cuando activas velocity
+local currentSpeed = 16
+local defaultSpeed = 25
 
 local function updateMedidor()
 	MedidorLabel.Text = tostring(currentSpeed)
@@ -166,7 +152,7 @@ VelocityButton.MouseButton1Click:Connect(function()
 	updateMedidor()
 end)
 
-VelocityButton_3.MouseButton1Click:Connect(function() -- +
+VelocityButton_3.MouseButton1Click:Connect(function()
 	if velocityEnabled then
 		currentSpeed = currentSpeed + 5
 		Humanoid.WalkSpeed = currentSpeed
@@ -174,7 +160,7 @@ VelocityButton_3.MouseButton1Click:Connect(function() -- +
 	end
 end)
 
-VelocityButton_2.MouseButton1Click:Connect(function() -- -
+VelocityButton_2.MouseButton1Click:Connect(function()
 	if velocityEnabled and currentSpeed > 5 then
 		currentSpeed = currentSpeed - 5
 		Humanoid.WalkSpeed = currentSpeed
@@ -182,5 +168,5 @@ VelocityButton_2.MouseButton1Click:Connect(function() -- -
 	end
 end)
 
--- Inicializar medidor
+-- Inicialización
 updateMedidor()
