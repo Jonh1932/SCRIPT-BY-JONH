@@ -1,5 +1,5 @@
---// JONHSCRIPTS BROOKHAVEN FULL GUI SCRIPT
---// Creado para funcionar con tu GUI existente de Roblox Studio
+--// JONHSCRIPTS BROOKHAVEN FINAL GUI SCRIPT (GUI ACTUALIZADA)
+--// Pegar este LocalScript dentro del ScreenGui generado por Gui2Lua
 
 -------------------------------------------------------
 -- VARIABLES PRINCIPALES
@@ -11,104 +11,88 @@ local UIS = game:GetService("UserInputService")
 local RS = game:GetService("ReplicatedStorage")
 
 -------------------------------------------------------
--- REFERENCIAS A TU GUI
+-- REFERENCIAS A ELEMENTOS DE TU GUI
 -------------------------------------------------------
-local gui = Player:WaitForChild("PlayerGui"):WaitForChild("ScreenGui")
-local frame = gui:WaitForChild("Frame")
-local toggleBall = gui:WaitForChild("ToggleBall")
+local ScreenGui = Player.PlayerGui:WaitForChild("ScreenGui")
+local Frame = ScreenGui:WaitForChild("Frame")
 
-local infJumpButton = frame:WaitForChild("JumpButton")
-local velButton = frame:WaitForChild("VelocityButton")
-local velPlus = frame:WaitForChild("+VelocityButton")
-local velMinus = frame:WaitForChild("-VelocityButton")
-local noclipButton = frame:WaitForChild("NoclipButton")
-local invisibleButton = frame:WaitForChild("InvisibleButton")
-local espButton = frame:WaitForChild("ESPButton")
-local spawnButton = frame:WaitForChild("SpawnButton")
-local medidor = gui:WaitForChild("MedidorLabel")
-
--------------------------------------------------------
--- 🔵 TOGGLE BALL (Abrir/Cerrar GUI)
--------------------------------------------------------
-toggleBall.Active = true
-toggleBall.Draggable = true
-frame.Visible = false
-
-toggleBall.InputBegan:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseButton1 then
-		frame.Visible = not frame.Visible
-	end
-end)
+local JumpButton = Frame:WaitForChild("JumpButton")
+local VelocityButton = Frame:WaitForChild("VelocityButton")
+local VelMinus = Frame:WaitForChild("-VelocityButton")
+local VelPlus = Frame:WaitForChild("+VelocityButton")
+local NoclipButton = Frame:WaitForChild("NoclipButton")
+local InvisibleButton = Frame:WaitForChild("InvisibleButton")
+local ESPButton = Frame:WaitForChild("ESPButton")
+local SpawnButton = Frame:WaitForChild("SpawnButton")
+local MedidorLabel = Frame:WaitForChild("MedidorLabel")
 
 -------------------------------------------------------
 -- 🦘 INF JUMP
 -------------------------------------------------------
-local infJumpEnabled = false
-
-infJumpButton.MouseButton1Click:Connect(function()
-	infJumpEnabled = not infJumpEnabled
-	infJumpButton.Text = infJumpEnabled and "INF JUMP [ON]" or "INF JUMP [OFF]"
+local infJump = false
+JumpButton.MouseButton1Click:Connect(function()
+	infJump = not infJump
+	JumpButton.Text = infJump and "INF JUMP [ON]" or "INF JUMP [OFF]"
 end)
 
 UIS.JumpRequest:Connect(function()
-	if infJumpEnabled and Humanoid then
+	if infJump and Humanoid then
 		Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
 	end
 end)
 
 -------------------------------------------------------
--- 🏃 VELOCITY (+ / -)
+-- ⚡ VELOCIDAD (ACTIVAR + AUMENTAR / DISMINUIR)
 -------------------------------------------------------
 local velocityEnabled = false
 local currentSpeed = 16
 local defaultSpeed = 25
 
-local function updateMedidor()
-	medidor.Text = tostring(currentSpeed)
+local function updateSpeedDisplay()
+	MedidorLabel.Text = tostring(currentSpeed)
 end
 
-velButton.MouseButton1Click:Connect(function()
+VelocityButton.MouseButton1Click:Connect(function()
 	velocityEnabled = not velocityEnabled
 	if velocityEnabled then
 		currentSpeed = defaultSpeed
 		Humanoid.WalkSpeed = currentSpeed
-		velButton.Text = "Velocity [ON]"
+		VelocityButton.Text = "Velocity [ON]"
 	else
 		currentSpeed = 16
 		Humanoid.WalkSpeed = currentSpeed
-		velButton.Text = "Velocity [OFF]"
+		VelocityButton.Text = "Velocity [OFF]"
 	end
-	updateMedidor()
+	updateSpeedDisplay()
 end)
 
-velPlus.MouseButton1Click:Connect(function()
+VelPlus.MouseButton1Click:Connect(function()
 	if velocityEnabled then
 		currentSpeed += 5
 		Humanoid.WalkSpeed = currentSpeed
-		updateMedidor()
+		updateSpeedDisplay()
 	end
 end)
 
-velMinus.MouseButton1Click:Connect(function()
+VelMinus.MouseButton1Click:Connect(function()
 	if velocityEnabled and currentSpeed > 5 then
 		currentSpeed -= 5
 		Humanoid.WalkSpeed = currentSpeed
-		updateMedidor()
+		updateSpeedDisplay()
 	end
 end)
 
 -------------------------------------------------------
 -- 🚪 NOCLIP
 -------------------------------------------------------
-local noclipEnabled = false
-
-noclipButton.MouseButton1Click:Connect(function()
-	noclipEnabled = not noclipEnabled
-	noclipButton.Text = noclipEnabled and "Noclip [ON]" or "Noclip [OFF]"
+local noclip = false
+NoclipButton.MouseButton1Click:Connect(function()
+	noclip = not noclip
+	NoclipButton.Text = noclip and "Noclip [ON]" or "Noclip [OFF]"
 end)
 
 game:GetService("RunService").Stepped:Connect(function()
-	if noclipEnabled then
+	if noclip and Character then
 		for _, part in ipairs(Character:GetChildren()) do
 			if part:IsA("BasePart") then
 				part.CanCollide = false
@@ -120,27 +104,24 @@ end)
 -------------------------------------------------------
 -- 👻 INVISIBLE
 -------------------------------------------------------
-local invisibleEnabled = false
-
-invisibleButton.MouseButton1Click:Connect(function()
-	invisibleEnabled = not invisibleEnabled
+local invisible = false
+InvisibleButton.MouseButton1Click:Connect(function()
+	invisible = not invisible
 	for _, part in ipairs(Character:GetChildren()) do
 		if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
-			part.Transparency = invisibleEnabled and 1 or 0
+			part.Transparency = invisible and 1 or 0
 		end
 	end
-	invisibleButton.Text = invisibleEnabled and "Invisible [ON]" or "Invisible [OFF]"
+	InvisibleButton.Text = invisible and "Invisible [ON]" or "Invisible [OFF]"
 end)
 
 -------------------------------------------------------
--- 🧍 ESP (Bordes para jugadores)
+-- 🧍 ESP JUGADORES
 -------------------------------------------------------
 local espEnabled = false
 
 local function createESP(player)
-	if player == Player then return end
-	if not player.Character then return end
-
+	if player == Player or not player.Character then return end
 	for _, part in ipairs(player.Character:GetChildren()) do
 		if part:IsA("BasePart") then
 			local highlight = Instance.new("Highlight")
@@ -152,18 +133,18 @@ local function createESP(player)
 end
 
 local function removeESP(player)
-	if not player.Character then return end
-	for _, obj in ipairs(player.Character:GetDescendants()) do
-		if obj:IsA("Highlight") then
-			obj:Destroy()
+	if player.Character then
+		for _, obj in ipairs(player.Character:GetDescendants()) do
+			if obj:IsA("Highlight") then
+				obj:Destroy()
+			end
 		end
 	end
 end
 
-espButton.MouseButton1Click:Connect(function()
+ESPButton.MouseButton1Click:Connect(function()
 	espEnabled = not espEnabled
-	espButton.Text = espEnabled and "ESP [ON]" or "ESP [OFF]"
-
+	ESPButton.Text = espEnabled and "ESP [ON]" or "ESP [OFF]"
 	for _, p in ipairs(game.Players:GetPlayers()) do
 		if espEnabled then
 			createESP(p)
@@ -185,15 +166,24 @@ end)
 -------------------------------------------------------
 -- 🚗 SPAWN LIMO
 -------------------------------------------------------
-spawnButton.MouseButton1Click:Connect(function()
-	RS.RE["1Ca1r"]:FireServer("PickingCar", "Limo")
-	spawnButton.Text = "Spawned ✅"
-	task.wait(2)
-	spawnButton.Text = "Spawn Limo"
+SpawnButton.MouseButton1Click:Connect(function()
+	local success, err = pcall(function()
+		RS.RE["1Ca1r"]:FireServer("PickingCar", "Limo")
+	end)
+	if success then
+		SpawnButton.Text = "Spawned ✅"
+		task.wait(2)
+		SpawnButton.Text = "Spawn Limo"
+	else
+		SpawnButton.Text = "⚠️ Error"
+		warn("[SPAWN ERROR]:", err)
+		task.wait(2)
+		SpawnButton.Text = "Spawn Limo"
+	end
 end)
 
 -------------------------------------------------------
 -- 🔧 INICIALIZACIÓN
 -------------------------------------------------------
-updateMedidor()
-print("✅ JONHSCRIPTS BROOKHAVEN GUI ACTIVADO")
+updateSpeedDisplay()
+print("✅ GUI DE JONHSCRIPTS CARGADA CORRECTAMENTE (ACTUALIZADA)")
