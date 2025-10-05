@@ -1,0 +1,180 @@
+-- GUI DE JONHSCRIPTS BROOKHAVEN (Con Toggle limpio + Bola flotante azul)
+
+local Player = game.Players.LocalPlayer
+local ScreenGui = Instance.new("ScreenGui")
+local Frame = Instance.new("Frame")
+local UICorner = Instance.new("UICorner")
+local TextLabel = Instance.new("TextLabel")
+
+-- Botones
+local JumpButton = Instance.new("TextButton")
+local VelocityButton = Instance.new("TextButton")
+local NoclipButton = Instance.new("TextButton")
+local ESPButton = Instance.new("TextButton")
+local InvisibleButton = Instance.new("TextButton")
+local SpawnButton = Instance.new("TextButton")
+
+-- Bola de toggle
+local ToggleBall = Instance.new("Frame")
+local BallCorner = Instance.new("UICorner")
+
+-- Parent
+ScreenGui.Parent = Player:WaitForChild("PlayerGui")
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+
+-- Bola Toggle
+ToggleBall.Parent = ScreenGui
+ToggleBall.Size = UDim2.new(0, 50, 0, 50)
+ToggleBall.Position = UDim2.new(0.05, 0, 0.5, 0)
+ToggleBall.BackgroundColor3 = Color3.fromRGB(0, 102, 255) -- Azul
+ToggleBall.Active = true
+ToggleBall.Draggable = true
+BallCorner.CornerRadius = UDim.new(1, 0) -- Hacerla bola
+BallCorner.Parent = ToggleBall
+
+-- Frame GUI
+Frame.Parent = ScreenGui
+Frame.BackgroundColor3 = Color3.new(0.203, 0.156, 0.239)
+Frame.BackgroundTransparency = 0.2
+Frame.Size = UDim2.new(0, 800, 0, 500)
+Frame.Position = UDim2.new(0.2,0,0.2,0)
+Frame.Active = true
+Frame.Draggable = true
+Frame.Visible = false -- oculto por defecto
+UICorner.Parent = Frame
+UICorner.CornerRadius = UDim.new(0, 99)
+
+TextLabel.Parent = Frame
+TextLabel.BackgroundTransparency = 1
+TextLabel.Position = UDim2.new(0.375, 0, 0, 0)
+TextLabel.Size = UDim2.new(0, 200, 0, 50)
+TextLabel.Font = Enum.Font.FredokaOne
+TextLabel.Text = "JONHSCRIPTS BROOKHAVEN"
+TextLabel.TextColor3 = Color3.new(1,1,1)
+TextLabel.TextSize = 20
+
+-- Función helper para botones
+local function MakeButton(btn, parent, pos, text)
+	btn.Parent = parent
+	btn.BackgroundColor3 = Color3.new(1,1,1)
+	btn.BackgroundTransparency = 0.3
+	btn.Position = pos
+	btn.Size = UDim2.new(0, 135, 0, 52)
+	btn.Font = Enum.Font.FredokaOne
+	btn.Text = text
+	btn.TextColor3 = Color3.new(0,0,0)
+	btn.TextSize = 14
+	btn.AutoButtonColor = true
+	local corner = Instance.new("UICorner")
+	corner.Parent = btn
+end
+
+MakeButton(JumpButton, Frame, UDim2.new(0.0225,0,0.176,0), "INF JUMP")
+MakeButton(VelocityButton, Frame, UDim2.new(0.3975,0,0.176,0), "Velocity")
+MakeButton(NoclipButton, Frame, UDim2.new(0.7875,0,0.176,0), "Noclip")
+MakeButton(ESPButton, Frame, UDim2.new(0.0225,0,0.448,0), "ESP PLAYER")
+MakeButton(InvisibleButton, Frame, UDim2.new(0.7875,0,0.468,0), "INVISIBLE")
+MakeButton(SpawnButton, Frame, UDim2.new(0.3975,0,0.666,0), "Spawn Limo")
+
+----------------------------------------------------
+-- FUNCIONES DE LOS BOTONES (Toggle Limpio)
+----------------------------------------------------
+
+-- INF JUMP
+local infjump = false
+JumpButton.MouseButton1Click:Connect(function()
+	infjump = not infjump
+	JumpButton.Text = infjump and "INF JUMP [ON]" or "INF JUMP [OFF]"
+end)
+
+game:GetService("UserInputService").JumpRequest:Connect(function()
+	if infjump then
+		local humanoid = Player.Character:FindFirstChildOfClass("Humanoid")
+		if humanoid then
+			humanoid:ChangeState("Jumping")
+		end
+	end
+end)
+
+-- VELOCIDAD
+local speedOn = false
+VelocityButton.MouseButton1Click:Connect(function()
+	local humanoid = Player.Character:FindFirstChildOfClass("Humanoid")
+	if humanoid then
+		speedOn = not speedOn
+		humanoid.WalkSpeed = speedOn and 80 or 16
+		VelocityButton.Text = speedOn and "Velocity [ON]" or "Velocity [OFF]"
+	end
+end)
+
+-- NOCLIP
+local noclip = false
+NoclipButton.MouseButton1Click:Connect(function()
+	noclip = not noclip
+	NoclipButton.Text = noclip and "Noclip [ON]" or "Noclip [OFF]"
+end)
+
+game:GetService("RunService").Stepped:Connect(function()
+	if noclip and Player.Character then
+		for _,v in pairs(Player.Character:GetDescendants()) do
+			if v:IsA("BasePart") then
+				v.CanCollide = false
+			end
+		end
+	end
+end)
+
+-- INVISIBLE
+local invisible = false
+InvisibleButton.MouseButton1Click:Connect(function()
+	invisible = not invisible
+	InvisibleButton.Text = invisible and "INVISIBLE [ON]" or "INVISIBLE [OFF]"
+	local char = Player.Character
+	if char then
+		for _, part in ipairs(char:GetDescendants()) do
+			if part:IsA("BasePart") then
+				part.LocalTransparencyModifier = invisible and 1 or 0
+			end
+		end
+	end
+end)
+
+-- ESP PLAYER
+local espOn = false
+ESPButton.MouseButton1Click:Connect(function()
+	espOn = not espOn
+	ESPButton.Text = espOn and "ESP PLAYER [ON]" or "ESP PLAYER [OFF]"
+	if espOn then
+		for _,plr in pairs(game.Players:GetPlayers()) do
+			if plr ~= Player and plr.Character then
+				if not plr.Character:FindFirstChild("JONH_ESP") then
+					local highlight = Instance.new("Highlight")
+					highlight.Name = "JONH_ESP"
+					highlight.FillTransparency = 1
+					highlight.OutlineColor = Color3.fromRGB(255,0,0)
+					highlight.Parent = plr.Character
+				end
+			end
+		end
+	else
+		for _,plr in pairs(game.Players:GetPlayers()) do
+			if plr.Character and plr.Character:FindFirstChild("JONH_ESP") then
+				plr.Character.JONH_ESP:Destroy()
+			end
+		end
+	end
+end)
+
+-- SPAWN LIMO
+SpawnButton.MouseButton1Click:Connect(function()
+	game:GetService("ReplicatedStorage").RE["1Ca1r"]:FireServer("PickingCar","Limo")
+end)
+
+----------------------------------------------------
+-- TOGGLE DE LA BOLA
+----------------------------------------------------
+ToggleBall.InputBegan:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 then
+		Frame.Visible = not Frame.Visible
+	end
+end)
