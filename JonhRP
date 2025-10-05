@@ -1,7 +1,7 @@
 --[[
 
 		JONHSCRIPTS BROOKHAVEN
-		GUI con Bola Toggle y Funciones
+	GUI + Bola Toggle Azul
 
 ]]
 
@@ -11,28 +11,33 @@ local ScreenGui = Instance.new("ScreenGui")
 local Frame = Instance.new("Frame")
 local UICorner = Instance.new("UICorner")
 local TextLabel = Instance.new("TextLabel")
-
 local JumpButton = Instance.new("TextButton")
+local UICorner_2 = Instance.new("UICorner")
 local VelocityButton = Instance.new("TextButton")
+local UICorner_3 = Instance.new("UICorner")
 local NoclipButton = Instance.new("TextButton")
+local UICorner_4 = Instance.new("UICorner")
 local ESPButton = Instance.new("TextButton")
+local UICorner_6 = Instance.new("UICorner")
 local InvisibleButton = Instance.new("TextButton")
+local UICorner_7 = Instance.new("UICorner")
 local SpawnButton = Instance.new("TextButton")
+local UICorner_8 = Instance.new("UICorner")
 
--- Bola toggle (usamos TextButton para que funcione el click)
+-- Bola toggle
 local ToggleBall = Instance.new("TextButton")
 local BallCorner = Instance.new("UICorner")
 
--- GUI PROPERTIES
+-- Properties
 ScreenGui.Parent = Player:WaitForChild("PlayerGui")
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
--- Bola azul
+-- Bola Azul
 ToggleBall.Parent = ScreenGui
 ToggleBall.Size = UDim2.new(0, 50, 0, 50)
 ToggleBall.Position = UDim2.new(0.05, 0, 0.5, 0)
 ToggleBall.BackgroundColor3 = Color3.fromRGB(0, 102, 255)
-ToggleBall.Text = "" -- sin texto
+ToggleBall.Text = ""
 ToggleBall.Active = true
 ToggleBall.Draggable = true
 BallCorner.CornerRadius = UDim.new(1, 0)
@@ -40,7 +45,7 @@ BallCorner.Parent = ToggleBall
 
 -- Frame GUI
 Frame.Parent = ScreenGui
-Frame.BackgroundColor3 = Color3.fromRGB(52, 40, 61)
+Frame.BackgroundColor3 = Color3.new(0.203922, 0.156863, 0.239216)
 Frame.BackgroundTransparency = 0.2
 Frame.BorderSizePixel = 0
 Frame.Position = UDim2.new(0.153, 0, 0.103, 0)
@@ -60,28 +65,42 @@ TextLabel.Text = "JONHSCRIPTS BROOKHAVEN"
 TextLabel.TextColor3 = Color3.new(1, 1, 1)
 TextLabel.TextSize = 20
 
--- FUNC PARA CREAR BOTONES
-local function MakeButton(btn, parent, pos, text)
-	btn.Parent = parent
-	btn.BackgroundColor3 = Color3.new(1,1,1)
-	btn.BackgroundTransparency = 0.3
-	btn.Position = pos
-	btn.Size = UDim2.new(0, 135, 0, 52)
-	btn.Font = Enum.Font.FredokaOne
-	btn.Text = text
-	btn.TextColor3 = Color3.new(0,0,0)
-	btn.TextSize = 14
-	btn.AutoButtonColor = true
-	local corner = Instance.new("UICorner")
-	corner.Parent = btn
-end
+-- Botones
+JumpButton.Parent = Frame
+JumpButton.Position = UDim2.new(0.0225,0,0.176,0)
+JumpButton.Size = UDim2.new(0,135,0,52)
+JumpButton.Text = "INF JUMP"
+UICorner_2.Parent = JumpButton
 
-MakeButton(JumpButton, Frame, UDim2.new(0.0225,0,0.176,0), "INF JUMP")
-MakeButton(VelocityButton, Frame, UDim2.new(0.3975,0,0.176,0), "Velocity")
-MakeButton(NoclipButton, Frame, UDim2.new(0.7875,0,0.176,0), "Noclip")
-MakeButton(ESPButton, Frame, UDim2.new(0.0225,0,0.448,0), "ESP PLAYER")
-MakeButton(InvisibleButton, Frame, UDim2.new(0.7875,0,0.468,0), "INVISIBLE")
-MakeButton(SpawnButton, Frame, UDim2.new(0.3975,0,0.666,0), "Spawn Limo")
+VelocityButton.Parent = Frame
+VelocityButton.Position = UDim2.new(0.3975,0,0.176,0)
+VelocityButton.Size = UDim2.new(0,135,0,52)
+VelocityButton.Text = "Velocity"
+UICorner_3.Parent = VelocityButton
+
+NoclipButton.Parent = Frame
+NoclipButton.Position = UDim2.new(0.7875,0,0.176,0)
+NoclipButton.Size = UDim2.new(0,135,0,52)
+NoclipButton.Text = "Noclip"
+UICorner_4.Parent = NoclipButton
+
+ESPButton.Parent = Frame
+ESPButton.Position = UDim2.new(0.0225,0,0.448,0)
+ESPButton.Size = UDim2.new(0,135,0,52)
+ESPButton.Text = "ESP PLAYER"
+UICorner_6.Parent = ESPButton
+
+InvisibleButton.Parent = Frame
+InvisibleButton.Position = UDim2.new(0.7875,0,0.468,0)
+InvisibleButton.Size = UDim2.new(0,135,0,52)
+InvisibleButton.Text = "INVISIBLE"
+UICorner_7.Parent = InvisibleButton
+
+SpawnButton.Parent = Frame
+SpawnButton.Position = UDim2.new(0.3975,0,0.666,0)
+SpawnButton.Size = UDim2.new(0,135,0,52)
+SpawnButton.Text = "Spawn Limo"
+UICorner_8.Parent = SpawnButton
 
 ----------------------------------------------------
 -- FUNCIONES DE LOS BOTONES
