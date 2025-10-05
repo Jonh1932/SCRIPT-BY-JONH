@@ -5,6 +5,7 @@
 
 local player = game.Players.LocalPlayer
 local replicatedStorage = game:GetService("ReplicatedStorage")
+local UIS = game:GetService("UserInputService")
 
 -- Crear GUI
 local ScreenGui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
@@ -18,30 +19,27 @@ Frame.Position = UDim2.new(0.153, 0, 0.103, 0)
 Instance.new("UICorner", Frame).CornerRadius = UDim.new(0, 99)
 Frame.Visible = false -- inicia oculto
 
--- Bola azul flotante en pantalla
+-- Bola azul flotante
 local OpenBall = Instance.new("TextButton", ScreenGui)
 OpenBall.Size = UDim2.new(0, 70, 0, 70)
 OpenBall.Position = UDim2.new(0.05, 0, 0.2, 0)
 OpenBall.BackgroundColor3 = Color3.fromRGB(0, 140, 255)
 OpenBall.Text = ""
-local BallCorner = Instance.new("UICorner", OpenBall)
-BallCorner.CornerRadius = UDim.new(1, 0)
+Instance.new("UICorner", OpenBall).CornerRadius = UDim.new(1, 0)
 
--- Al clickear: mostrar/ocultar GUI (toggle)
+-- Toggle abrir/cerrar GUI
 OpenBall.MouseButton1Click:Connect(function()
 	Frame.Visible = not Frame.Visible
 end)
 
--- Función para hacer drag (mover con el mouse)
+-- Función para hacer draggable
 local function makeDraggable(guiObject)
-	local dragging, dragInput, mousePos, framePos
-
+	local dragging, dragInput, dragStart, startPos
 	guiObject.InputBegan:Connect(function(input)
 		if input.UserInputType == Enum.UserInputType.MouseButton1 then
 			dragging = true
-			mousePos = input.Position
-			framePos = guiObject.Position
-
+			dragStart = input.Position
+			startPos = guiObject.Position
 			input.Changed:Connect(function()
 				if input.UserInputState == Enum.UserInputState.End then
 					dragging = false
@@ -49,31 +47,29 @@ local function makeDraggable(guiObject)
 			end)
 		end
 	end)
-
 	guiObject.InputChanged:Connect(function(input)
 		if input.UserInputType == Enum.UserInputType.MouseMovement then
 			dragInput = input
 		end
 	end)
-
-	game:GetService("UserInputService").InputChanged:Connect(function(input)
+	UIS.InputChanged:Connect(function(input)
 		if input == dragInput and dragging then
-			local delta = input.Position - mousePos
+			local delta = input.Position - dragStart
 			guiObject.Position = UDim2.new(
-				framePos.X.Scale,
-				framePos.X.Offset + delta.X,
-				framePos.Y.Scale,
-				framePos.Y.Offset + delta.Y
+				startPos.X.Scale,
+				startPos.X.Offset + delta.X,
+				startPos.Y.Scale,
+				startPos.Y.Offset + delta.Y
 			)
 		end
 	end)
 end
 
--- Hacer que la bola y el GUI sean arrastrables
+-- Hacer movibles la bola y el Frame
 makeDraggable(OpenBall)
 makeDraggable(Frame)
 
--- Funciones de creación de botones
+-- Funciones de botones
 local function newButton(name, text, pos)
 	local btn = Instance.new("TextButton", Frame)
 	btn.Name = name
@@ -104,6 +100,7 @@ local function newSmallButton(name, text, pos)
 	return btn
 end
 
+-- Título
 local TextLabel = Instance.new("TextLabel", Frame)
 TextLabel.Size = UDim2.new(0, 200, 0, 50)
 TextLabel.Position = UDim2.new(0.375, 0, 0, 0)
@@ -113,7 +110,7 @@ TextLabel.Text = "JONHSCRIPTS BROOKHAVEN"
 TextLabel.TextColor3 = Color3.new(1, 1, 1)
 TextLabel.TextSize = 20
 
---// BOTONES
+-- BOTONES
 local JumpButton = newButton("JumpButton", "INF JUMP", UDim2.new(0.0225, 0, 0.176, 0))
 local VelocityButton = newButton("VelocityButton", "Velocity", UDim2.new(0.3975, 0, 0.176, 0))
 local NoclipButton = newButton("NoclipButton", "Noclip", UDim2.new(0.7875, 0, 0.176, 0))
@@ -134,7 +131,7 @@ MedidorLabel.Text = "16"
 MedidorLabel.TextColor3 = Color3.new(0, 0, 0)
 Instance.new("UICorner", MedidorLabel)
 
---// FUNCIONALIDAD
+-- FUNCIONALIDAD
 local humanoid = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
 if not humanoid then
 	player.CharacterAdded:Wait()
@@ -151,8 +148,6 @@ local invisible = false
 JumpButton.MouseButton1Click:Connect(function()
 	infJump = not infJump
 	JumpButton.Text = infJump and "INF JUMP ✅" or "INF JUMP ❌"
-
-	local UIS = game:GetService("UserInputService")
 	UIS.JumpRequest:Connect(function()
 		if infJump and humanoid then
 			humanoid:ChangeState("Jumping")
@@ -164,13 +159,11 @@ end)
 VelocityButton.MouseButton1Click:Connect(function()
 	humanoid.WalkSpeed = speed
 end)
-
 PlusButton.MouseButton1Click:Connect(function()
 	speed += 5
 	humanoid.WalkSpeed = speed
 	MedidorLabel.Text = tostring(speed)
 end)
-
 MinusButton.MouseButton1Click:Connect(function()
 	speed = math.max(0, speed - 5)
 	humanoid.WalkSpeed = speed
@@ -185,17 +178,13 @@ NoclipButton.MouseButton1Click:Connect(function()
 	if noclip then
 		noclipConnection = game:GetService("RunService").Stepped:Connect(function()
 			for _, p in pairs(player.Character:GetDescendants()) do
-				if p:IsA("BasePart") then
-					p.CanCollide = false
-				end
+				if p:IsA("BasePart") then p.CanCollide = false end
 			end
 		end)
 	else
 		if noclipConnection then noclipConnection:Disconnect() end
 		for _, p in pairs(player.Character:GetDescendants()) do
-			if p:IsA("BasePart") then
-				p.CanCollide = true
-			end
+			if p:IsA("BasePart") then p.CanCollide = true end
 		end
 	end
 end)
@@ -217,13 +206,11 @@ local function addESP(model)
 	h.FillTransparency = 1
 	h.OutlineColor = Color3.new(1, 0, 0)
 end
-
 local function removeESP(model)
 	for _, v in pairs(model:GetChildren()) do
 		if v:IsA("Highlight") then v:Destroy() end
 	end
 end
-
 ESPButton.MouseButton1Click:Connect(function()
 	espEnabled = not espEnabled
 	ESPButton.Text = espEnabled and "ESP ✅" or "ESP ❌"
@@ -248,5 +235,5 @@ SpawnButton.MouseButton1Click:Connect(function()
 	SpawnButton.Text = "Spawn Limo"
 end)
 
-print("✅ GUI JONHSCRIPTS cargada con bola azul permanente y drag.")
+print("✅ GUI JONHSCRIPTS cargada con bola azul movible y Frame arrastrable.")
 
