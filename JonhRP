@@ -1,17 +1,18 @@
-
 --// 🔥 JONHSCRIPTS BROOKHAVEN FINAL GUI
 --// Hecho por ChatGPT (GPT-5)
---// Incluye GUI + TODAS LAS FUNCIONES + Bola Azul Permanente + Drag (flotantes)
+--// Incluye GUI + TODAS LAS FUNCIONES + Bola Azul Permanente + Drag Real
 
 local player = game.Players.LocalPlayer
 local replicatedStorage = game:GetService("ReplicatedStorage")
 local UIS = game:GetService("UserInputService")
 
 -- Crear GUI
-local ScreenGui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Parent = player:WaitForChild("PlayerGui")
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
-local Frame = Instance.new("Frame", ScreenGui)
+local Frame = Instance.new("Frame")
+Frame.Parent = ScreenGui
 Frame.BackgroundColor3 = Color3.fromRGB(52, 40, 61)
 Frame.BackgroundTransparency = 0.2
 Frame.Size = UDim2.new(0, 740, 0, 427)
@@ -20,7 +21,8 @@ Instance.new("UICorner", Frame).CornerRadius = UDim.new(0, 99)
 Frame.Visible = false -- inicia oculto
 
 -- Bola azul flotante
-local OpenBall = Instance.new("TextButton", ScreenGui)
+local OpenBall = Instance.new("TextButton")
+OpenBall.Parent = ScreenGui
 OpenBall.Size = UDim2.new(0, 70, 0, 70)
 OpenBall.Position = UDim2.new(0.05, 0, 0.2, 0)
 OpenBall.BackgroundColor3 = Color3.fromRGB(0, 140, 255)
@@ -32,30 +34,30 @@ OpenBall.MouseButton1Click:Connect(function()
 	Frame.Visible = not Frame.Visible
 end)
 
--- Función para hacer draggable
-local function makeDraggable(guiObject)
-	local dragging, dragInput, dragStart, startPos
-	guiObject.InputBegan:Connect(function(input)
+-- 🔹 Función universal de arrastre
+local function makeDraggable(gui)
+	local dragToggle = nil
+	local dragStart = nil
+	local startPos = nil
+
+	gui.InputBegan:Connect(function(input)
 		if input.UserInputType == Enum.UserInputType.MouseButton1 then
-			dragging = true
+			dragToggle = true
 			dragStart = input.Position
-			startPos = guiObject.Position
+			startPos = gui.Position
+
 			input.Changed:Connect(function()
 				if input.UserInputState == Enum.UserInputState.End then
-					dragging = false
+					dragToggle = false
 				end
 			end)
 		end
 	end)
-	guiObject.InputChanged:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.MouseMovement then
-			dragInput = input
-		end
-	end)
+
 	UIS.InputChanged:Connect(function(input)
-		if input == dragInput and dragging then
+		if input.UserInputType == Enum.UserInputType.MouseMovement and dragToggle then
 			local delta = input.Position - dragStart
-			guiObject.Position = UDim2.new(
+			gui.Position = UDim2.new(
 				startPos.X.Scale,
 				startPos.X.Offset + delta.X,
 				startPos.Y.Scale,
@@ -65,11 +67,11 @@ local function makeDraggable(guiObject)
 	end)
 end
 
--- Hacer movibles la bola y el Frame
+-- 🔹 Hacer arrastrables la bola y el Frame
 makeDraggable(OpenBall)
 makeDraggable(Frame)
 
--- Funciones de botones
+-- Funciones de creación de botones
 local function newButton(name, text, pos)
 	local btn = Instance.new("TextButton", Frame)
 	btn.Name = name
@@ -100,7 +102,7 @@ local function newSmallButton(name, text, pos)
 	return btn
 end
 
--- Título
+-- Label título
 local TextLabel = Instance.new("TextLabel", Frame)
 TextLabel.Size = UDim2.new(0, 200, 0, 50)
 TextLabel.Position = UDim2.new(0.375, 0, 0, 0)
@@ -235,5 +237,4 @@ SpawnButton.MouseButton1Click:Connect(function()
 	SpawnButton.Text = "Spawn Limo"
 end)
 
-print("✅ GUI JONHSCRIPTS cargada con bola azul movible y Frame arrastrable.")
-
+print("✅ GUI JONHSCRIPTS cargada con bola azul y GUI movibles (drag funcionando).")
