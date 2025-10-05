@@ -1,11 +1,12 @@
+```lua
 --// 🔥 JONHSCRIPTS BROOKHAVEN FINAL GUI
 --// Hecho por ChatGPT (GPT-5)
---// Incluye GUI + TODAS LAS FUNCIONES (FUNCIONAL) + Bola Azul de Apertura
+--// Incluye GUI + TODAS LAS FUNCIONES + Bola Azul Permanente + Drag (flotantes)
 
 local player = game.Players.LocalPlayer
 local replicatedStorage = game:GetService("ReplicatedStorage")
 
--- Crear GUI (Tu diseño original)
+-- Crear GUI
 local ScreenGui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
@@ -15,25 +16,64 @@ Frame.BackgroundTransparency = 0.2
 Frame.Size = UDim2.new(0, 740, 0, 427)
 Frame.Position = UDim2.new(0.153, 0, 0.103, 0)
 Instance.new("UICorner", Frame).CornerRadius = UDim.new(0, 99)
-
--- GUI arranca oculta
-Frame.Visible = false
+Frame.Visible = false -- inicia oculto
 
 -- Bola azul flotante en pantalla
 local OpenBall = Instance.new("TextButton", ScreenGui)
 OpenBall.Size = UDim2.new(0, 70, 0, 70)
-OpenBall.Position = UDim2.new(0.05, 0, 0.2, 0) -- puedes mover la posición en pantalla
+OpenBall.Position = UDim2.new(0.05, 0, 0.2, 0)
 OpenBall.BackgroundColor3 = Color3.fromRGB(0, 140, 255)
 OpenBall.Text = ""
 local BallCorner = Instance.new("UICorner", OpenBall)
-BallCorner.CornerRadius = UDim.new(1, 0) -- lo hace perfectamente redondo
+BallCorner.CornerRadius = UDim.new(1, 0)
 
--- Al clickear: mostrar GUI y borrar la bola
+-- Al clickear: mostrar/ocultar GUI (toggle)
 OpenBall.MouseButton1Click:Connect(function()
-	Frame.Visible = true
-	OpenBall:Destroy()
+	Frame.Visible = not Frame.Visible
 end)
 
+-- Función para hacer drag (mover con el mouse)
+local function makeDraggable(guiObject)
+	local dragging, dragInput, mousePos, framePos
+
+	guiObject.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 then
+			dragging = true
+			mousePos = input.Position
+			framePos = guiObject.Position
+
+			input.Changed:Connect(function()
+				if input.UserInputState == Enum.UserInputState.End then
+					dragging = false
+				end
+			end)
+		end
+	end)
+
+	guiObject.InputChanged:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseMovement then
+			dragInput = input
+		end
+	end)
+
+	game:GetService("UserInputService").InputChanged:Connect(function(input)
+		if input == dragInput and dragging then
+			local delta = input.Position - mousePos
+			guiObject.Position = UDim2.new(
+				framePos.X.Scale,
+				framePos.X.Offset + delta.X,
+				framePos.Y.Scale,
+				framePos.Y.Offset + delta.Y
+			)
+		end
+	end)
+end
+
+-- Hacer que la bola y el GUI sean arrastrables
+makeDraggable(OpenBall)
+makeDraggable(Frame)
+
+-- Funciones de creación de botones
 local function newButton(name, text, pos)
 	local btn = Instance.new("TextButton", Frame)
 	btn.Name = name
@@ -208,4 +248,5 @@ SpawnButton.MouseButton1Click:Connect(function()
 	SpawnButton.Text = "Spawn Limo"
 end)
 
-print("✅ GUI JONHSCRIPTS cargada correctamente con bola azul de apertura.")
+print("✅ GUI JONHSCRIPTS cargada con bola azul permanente y drag.")
+```
