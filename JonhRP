@@ -1,46 +1,57 @@
--- GUI DE JONHSCRIPTS BROOKHAVEN (Con Toggle limpio + Bola flotante azul)
+--[[
 
+		JONHSCRIPTS BROOKHAVEN
+		GUI con Bola Toggle y Funciones
+
+]]
+
+-- Instances
 local Player = game.Players.LocalPlayer
 local ScreenGui = Instance.new("ScreenGui")
 local Frame = Instance.new("Frame")
 local UICorner = Instance.new("UICorner")
 local TextLabel = Instance.new("TextLabel")
-
--- Botones
 local JumpButton = Instance.new("TextButton")
+local UICorner_2 = Instance.new("UICorner")
 local VelocityButton = Instance.new("TextButton")
+local UICorner_3 = Instance.new("UICorner")
 local NoclipButton = Instance.new("TextButton")
+local UICorner_4 = Instance.new("UICorner")
 local ESPButton = Instance.new("TextButton")
+local UICorner_6 = Instance.new("UICorner")
 local InvisibleButton = Instance.new("TextButton")
+local UICorner_7 = Instance.new("UICorner")
 local SpawnButton = Instance.new("TextButton")
+local UICorner_8 = Instance.new("UICorner")
 
--- Bola de toggle
+-- Bola toggle
 local ToggleBall = Instance.new("Frame")
 local BallCorner = Instance.new("UICorner")
 
--- Parent
+-- GUI PROPERTIES
 ScreenGui.Parent = Player:WaitForChild("PlayerGui")
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
--- Bola Toggle
+-- Bola azul
 ToggleBall.Parent = ScreenGui
 ToggleBall.Size = UDim2.new(0, 50, 0, 50)
 ToggleBall.Position = UDim2.new(0.05, 0, 0.5, 0)
-ToggleBall.BackgroundColor3 = Color3.fromRGB(0, 102, 255) -- Azul
+ToggleBall.BackgroundColor3 = Color3.fromRGB(0, 102, 255)
 ToggleBall.Active = true
 ToggleBall.Draggable = true
-BallCorner.CornerRadius = UDim.new(1, 0) -- Hacerla bola
+BallCorner.CornerRadius = UDim.new(1, 0)
 BallCorner.Parent = ToggleBall
 
 -- Frame GUI
 Frame.Parent = ScreenGui
-Frame.BackgroundColor3 = Color3.new(0.203, 0.156, 0.239)
+Frame.BackgroundColor3 = Color3.new(0.203922, 0.156863, 0.239216)
 Frame.BackgroundTransparency = 0.2
+Frame.BorderSizePixel = 0
+Frame.Position = UDim2.new(0.153, 0, 0.103, 0)
 Frame.Size = UDim2.new(0, 800, 0, 500)
-Frame.Position = UDim2.new(0.2,0,0.2,0)
 Frame.Active = true
 Frame.Draggable = true
-Frame.Visible = false -- oculto por defecto
+Frame.Visible = false
 UICorner.Parent = Frame
 UICorner.CornerRadius = UDim.new(0, 99)
 
@@ -50,10 +61,10 @@ TextLabel.Position = UDim2.new(0.375, 0, 0, 0)
 TextLabel.Size = UDim2.new(0, 200, 0, 50)
 TextLabel.Font = Enum.Font.FredokaOne
 TextLabel.Text = "JONHSCRIPTS BROOKHAVEN"
-TextLabel.TextColor3 = Color3.new(1,1,1)
+TextLabel.TextColor3 = Color3.new(1, 1, 1)
 TextLabel.TextSize = 20
 
--- Función helper para botones
+-- BOTONES
 local function MakeButton(btn, parent, pos, text)
 	btn.Parent = parent
 	btn.BackgroundColor3 = Color3.new(1,1,1)
@@ -89,7 +100,7 @@ end)
 
 game:GetService("UserInputService").JumpRequest:Connect(function()
 	if infjump then
-		local humanoid = Player.Character:FindFirstChildOfClass("Humanoid")
+		local humanoid = Player.Character and Player.Character:FindFirstChildOfClass("Humanoid")
 		if humanoid then
 			humanoid:ChangeState("Jumping")
 		end
@@ -99,7 +110,7 @@ end)
 -- VELOCIDAD
 local speedOn = false
 VelocityButton.MouseButton1Click:Connect(function()
-	local humanoid = Player.Character:FindFirstChildOfClass("Humanoid")
+	local humanoid = Player.Character and Player.Character:FindFirstChildOfClass("Humanoid")
 	if humanoid then
 		speedOn = not speedOn
 		humanoid.WalkSpeed = speedOn and 80 or 16
