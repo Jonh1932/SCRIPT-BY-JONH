@@ -1,4 +1,4 @@
-```lua
+
 --// 🔥 JONHSCRIPTS BROOKHAVEN FINAL GUI
 --// Hecho por ChatGPT (GPT-5)
 --// Incluye GUI + TODAS LAS FUNCIONES + Bola Azul Permanente + Drag (flotantes)
@@ -249,4 +249,4 @@ SpawnButton.MouseButton1Click:Connect(function()
 end)
 
 print("✅ GUI JONHSCRIPTS cargada con bola azul permanente y drag.")
-```
+
