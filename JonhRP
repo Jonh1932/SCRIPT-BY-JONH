@@ -1,10 +1,9 @@
--- JONHSCRIPTS BROOKHAVEN GUI (LIMPIO + Velocity Ajustable + Toggle Bola Azul)
-
+-- JONHSCRIPTS BROOKHAVEN GUI (Corregido)
 local Player = game.Players.LocalPlayer
 local Character = Player.Character or Player.CharacterAdded:Wait()
 local Humanoid = Character:WaitForChild("Humanoid")
 
--- CREACIÓN DE GUI (tu diseño exportado de Gui2Lua)
+-- CREACIÓN DE GUI
 local ScreenGui = Instance.new("ScreenGui")
 local Frame = Instance.new("Frame")
 local UICorner = Instance.new("UICorner")
@@ -20,11 +19,12 @@ local UICorner_10 = Instance.new("UICorner")
 local MedidorLabel = Instance.new("TextLabel")
 local UICorner_11 = Instance.new("UICorner")
 
--- ScreenGui
+ScreenGui.Name = "JONHSCRIPTS_GUI"
 ScreenGui.Parent = Player:WaitForChild("PlayerGui")
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+ScreenGui.ResetOnSpawn = false
 
--- Frame
+-- Frame principal
 Frame.Parent = ScreenGui
 Frame.BackgroundColor3 = Color3.fromRGB(52, 40, 61)
 Frame.BackgroundTransparency = 0.2
@@ -32,7 +32,7 @@ Frame.Position = UDim2.new(0.15, 0, 0.1, 0)
 Frame.Size = UDim2.new(0, 800, 0, 500)
 Frame.Active = true
 Frame.Draggable = true
-Frame.Visible = false -- 🔴 OCULTO al inicio
+Frame.Visible = false -- 🔴 Oculto al inicio
 
 UICorner.Parent = Frame
 UICorner.CornerRadius = UDim.new(0, 99)
@@ -47,7 +47,7 @@ TextLabel.Text = "JONHSCRIPTS BROOKHAVEN"
 TextLabel.TextColor3 = Color3.new(1, 1, 1)
 TextLabel.TextSize = 20
 
--- JumpButton
+-- INF JUMP Button
 JumpButton.Parent = Frame
 JumpButton.Position = UDim2.new(0.0225, 0, 0.176, 0)
 JumpButton.Size = UDim2.new(0, 135, 0, 52)
@@ -58,7 +58,7 @@ JumpButton.Font = Enum.Font.FredokaOne
 JumpButton.TextSize = 14
 UICorner_2.Parent = JumpButton
 
--- VelocityButton
+-- Velocity Button
 VelocityButton.Parent = Frame
 VelocityButton.Position = UDim2.new(0.3975, 0, 0.176, 0)
 VelocityButton.Size = UDim2.new(0, 135, 0, 52)
@@ -83,33 +83,35 @@ VelocityButton_3.Size = UDim2.new(0, 43, 0, 45)
 VelocityButton_3.Text = "+"
 UICorner_10.Parent = VelocityButton_3
 
--- MedidorLabel
-MedidorLabel.Parent = ScreenGui
+-- Medidor dentro del Frame
+MedidorLabel.Parent = Frame
 MedidorLabel.Position = UDim2.new(0.45, 0, 0.29, 0)
 MedidorLabel.Size = UDim2.new(0, 104, 0, 34)
 MedidorLabel.BackgroundColor3 = Color3.new(1, 1, 1)
 MedidorLabel.BackgroundTransparency = 0.3
-MedidorLabel.Text = "0" -- 🔴 ahora sí arranca en 0
+MedidorLabel.Text = "0"
 MedidorLabel.TextSize = 14
 UICorner_11.Parent = MedidorLabel
 
+-------------------------------------------------------
 -- 🔵 Bola Toggle
-local ToggleBall = Instance.new("Frame")
+-------------------------------------------------------
+local ToggleBall = Instance.new("TextButton")
 ToggleBall.Parent = ScreenGui
 ToggleBall.Size = UDim2.new(0, 50, 0, 50)
 ToggleBall.Position = UDim2.new(0.05, 0, 0.5, 0)
 ToggleBall.BackgroundColor3 = Color3.fromRGB(0, 102, 255)
+ToggleBall.Text = ""
 ToggleBall.Active = true
 ToggleBall.Draggable = true
+ToggleBall.ZIndex = 10 -- 🔼 encima del resto
 
 local BallCorner = Instance.new("UICorner")
 BallCorner.CornerRadius = UDim.new(1, 0)
 BallCorner.Parent = ToggleBall
 
-ToggleBall.InputBegan:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseButton1 then
-		Frame.Visible = not Frame.Visible
-	end
+ToggleBall.MouseButton1Click:Connect(function()
+	Frame.Visible = not Frame.Visible
 end)
 
 -------------------------------------------------------
