@@ -1,189 +1,170 @@
---// JONHSCRIPTS BROOKHAVEN FINAL GUI SCRIPT (GUI ACTUALIZADA)
---// Pegar este LocalScript dentro del ScreenGui generado por Gui2Lua
+--// JONHSCRIPTS BROOKHAVEN FINAL GUI SCRIPT
+--// Hecho por ChatGPT (GPT-5) 💜
 
--------------------------------------------------------
--- VARIABLES PRINCIPALES
--------------------------------------------------------
-local Player = game.Players.LocalPlayer
-local Character = Player.Character or Player.CharacterAdded:Wait()
-local Humanoid = Character:WaitForChild("Humanoid")
-local UIS = game:GetService("UserInputService")
-local RS = game:GetService("ReplicatedStorage")
+local player = game.Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoid = character:WaitForChild("Humanoid")
+local replicatedStorage = game:GetService("ReplicatedStorage")
 
--------------------------------------------------------
--- REFERENCIAS A ELEMENTOS DE TU GUI
--------------------------------------------------------
-local ScreenGui = Player.PlayerGui:WaitForChild("ScreenGui")
-local Frame = ScreenGui:WaitForChild("Frame")
+--// Referencias a los botones en tu GUI
+local gui = script.Parent
+local frame = gui:WaitForChild("Frame")
 
-local JumpButton = Frame:WaitForChild("JumpButton")
-local VelocityButton = Frame:WaitForChild("VelocityButton")
-local VelMinus = Frame:WaitForChild("-VelocityButton")
-local VelPlus = Frame:WaitForChild("+VelocityButton")
-local NoclipButton = Frame:WaitForChild("NoclipButton")
-local InvisibleButton = Frame:WaitForChild("InvisibleButton")
-local ESPButton = Frame:WaitForChild("ESPButton")
-local SpawnButton = Frame:WaitForChild("SpawnButton")
-local MedidorLabel = Frame:WaitForChild("MedidorLabel")
+local JumpButton = frame:WaitForChild("JumpButton")
+local VelocityButton = frame:WaitForChild("VelocityButton")
+local VelocityMinus = frame:WaitForChild("-VelocityButton")
+local VelocityPlus = frame:WaitForChild("+VelocityButton")
+local NoclipButton = frame:WaitForChild("NoclipButton")
+local InvisibleButton = frame:WaitForChild("InvisibleButton")
+local ESPButton = frame:WaitForChild("ESPButton")
+local SpawnButton = frame:WaitForChild("SpawnButton")
+local MedidorLabel = frame:WaitForChild("MedidorLabel")
 
--------------------------------------------------------
--- 🦘 INF JUMP
--------------------------------------------------------
+--// Variables de control
+local noclipActive = false
 local infJump = false
+local walkSpeed = 16
+local espEnabled = false
+local invisibleEnabled = false
+
+---------------------------------------------------------
+--// 🔹 INFINITE JUMP
+---------------------------------------------------------
 JumpButton.MouseButton1Click:Connect(function()
 	infJump = not infJump
-	JumpButton.Text = infJump and "INF JUMP [ON]" or "INF JUMP [OFF]"
-end)
+	JumpButton.Text = infJump and "INF JUMP ✅" or "INF JUMP ❌"
 
-UIS.JumpRequest:Connect(function()
-	if infJump and Humanoid then
-		Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+	if infJump then
+		local UserInputService = game:GetService("UserInputService")
+		UserInputService.JumpRequest:Connect(function()
+			if infJump and humanoid then
+				humanoid:ChangeState("Jumping")
+			end
+		end)
 	end
 end)
 
--------------------------------------------------------
--- ⚡ VELOCIDAD (ACTIVAR + AUMENTAR / DISMINUIR)
--------------------------------------------------------
-local velocityEnabled = false
-local currentSpeed = 16
-local defaultSpeed = 25
-
-local function updateSpeedDisplay()
-	MedidorLabel.Text = tostring(currentSpeed)
-end
-
+---------------------------------------------------------
+--// 🔹 VELOCIDAD (CONTROLABLE CON + Y -)
+---------------------------------------------------------
 VelocityButton.MouseButton1Click:Connect(function()
-	velocityEnabled = not velocityEnabled
-	if velocityEnabled then
-		currentSpeed = defaultSpeed
-		Humanoid.WalkSpeed = currentSpeed
-		VelocityButton.Text = "Velocity [ON]"
-	else
-		currentSpeed = 16
-		Humanoid.WalkSpeed = currentSpeed
-		VelocityButton.Text = "Velocity [OFF]"
-	end
-	updateSpeedDisplay()
-end)
-
-VelPlus.MouseButton1Click:Connect(function()
-	if velocityEnabled then
-		currentSpeed += 5
-		Humanoid.WalkSpeed = currentSpeed
-		updateSpeedDisplay()
+	if humanoid then
+		humanoid.WalkSpeed = walkSpeed
 	end
 end)
 
-VelMinus.MouseButton1Click:Connect(function()
-	if velocityEnabled and currentSpeed > 5 then
-		currentSpeed -= 5
-		Humanoid.WalkSpeed = currentSpeed
-		updateSpeedDisplay()
-	end
+VelocityPlus.MouseButton1Click:Connect(function()
+	walkSpeed += 5
+	humanoid.WalkSpeed = walkSpeed
+	MedidorLabel.Text = tostring(walkSpeed)
 end)
 
--------------------------------------------------------
--- 🚪 NOCLIP
--------------------------------------------------------
-local noclip = false
+VelocityMinus.MouseButton1Click:Connect(function()
+	walkSpeed = math.max(0, walkSpeed - 5)
+	humanoid.WalkSpeed = walkSpeed
+	MedidorLabel.Text = tostring(walkSpeed)
+end)
+
+---------------------------------------------------------
+--// 🔹 NOCLIP
+---------------------------------------------------------
+local noclipConnection
 NoclipButton.MouseButton1Click:Connect(function()
-	noclip = not noclip
-	NoclipButton.Text = noclip and "Noclip [ON]" or "Noclip [OFF]"
-end)
+	noclipActive = not noclipActive
+	NoclipButton.Text = noclipActive and "NOCLIP ✅" or "NOCLIP ❌"
 
-game:GetService("RunService").Stepped:Connect(function()
-	if noclip and Character then
-		for _, part in ipairs(Character:GetChildren()) do
+	if noclipActive then
+		noclipConnection = game:GetService("RunService").Stepped:Connect(function()
+			for _, part in pairs(character:GetDescendants()) do
+				if part:IsA("BasePart") then
+					part.CanCollide = false
+				end
+			end
+		end)
+	else
+		if noclipConnection then noclipConnection:Disconnect() end
+		for _, part in pairs(character:GetDescendants()) do
 			if part:IsA("BasePart") then
-				part.CanCollide = false
+				part.CanCollide = true
 			end
 		end
 	end
 end)
 
--------------------------------------------------------
--- 👻 INVISIBLE
--------------------------------------------------------
-local invisible = false
+---------------------------------------------------------
+--// 🔹 INVISIBLE
+---------------------------------------------------------
 InvisibleButton.MouseButton1Click:Connect(function()
-	invisible = not invisible
-	for _, part in ipairs(Character:GetChildren()) do
-		if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
-			part.Transparency = invisible and 1 or 0
+	invisibleEnabled = not invisibleEnabled
+	InvisibleButton.Text = invisibleEnabled and "INVISIBLE ✅" or "INVISIBLE ❌"
+
+	for _, part in pairs(character:GetChildren()) do
+		if part:IsA("BasePart") then
+			part.Transparency = invisibleEnabled and 1 or 0
+		elseif part:IsA("Decal") then
+			part.Transparency = invisibleEnabled and 1 or 0
 		end
 	end
-	InvisibleButton.Text = invisible and "Invisible [ON]" or "Invisible [OFF]"
 end)
 
--------------------------------------------------------
--- 🧍 ESP JUGADORES
--------------------------------------------------------
-local espEnabled = false
-
-local function createESP(player)
-	if player == Player or not player.Character then return end
-	for _, part in ipairs(player.Character:GetChildren()) do
-		if part:IsA("BasePart") then
-			local highlight = Instance.new("Highlight")
-			highlight.Parent = part
-			highlight.FillTransparency = 1
-			highlight.OutlineColor = Color3.fromRGB(0, 255, 0)
-		end
-	end
+---------------------------------------------------------
+--// 🔹 ESP (Bordes en todos los jugadores)
+---------------------------------------------------------
+local function createESP(target)
+	local highlight = Instance.new("Highlight")
+	highlight.FillTransparency = 1
+	highlight.OutlineColor = Color3.fromRGB(255, 0, 0)
+	highlight.Parent = target
 end
 
-local function removeESP(player)
-	if player.Character then
-		for _, obj in ipairs(player.Character:GetDescendants()) do
-			if obj:IsA("Highlight") then
-				obj:Destroy()
-			end
+local function removeESP(target)
+	for _, v in pairs(target:GetChildren()) do
+		if v:IsA("Highlight") then
+			v:Destroy()
 		end
 	end
 end
 
 ESPButton.MouseButton1Click:Connect(function()
 	espEnabled = not espEnabled
-	ESPButton.Text = espEnabled and "ESP [ON]" or "ESP [OFF]"
-	for _, p in ipairs(game.Players:GetPlayers()) do
-		if espEnabled then
-			createESP(p)
-		else
-			removeESP(p)
+	ESPButton.Text = espEnabled and "ESP ✅" or "ESP ❌"
+
+	for _, plr in pairs(game.Players:GetPlayers()) do
+		if plr ~= player and plr.Character then
+			if espEnabled then
+				createESP(plr.Character)
+			else
+				removeESP(plr.Character)
+			end
 		end
 	end
-end)
 
-game.Players.PlayerAdded:Connect(function(p)
-	if espEnabled then
-		p.CharacterAdded:Connect(function()
-			task.wait(1)
-			createESP(p)
+	game.Players.PlayerAdded:Connect(function(plr)
+		plr.CharacterAdded:Connect(function(char)
+			if espEnabled then
+				createESP(char)
+			end
 		end)
-	end
-end)
-
--------------------------------------------------------
--- 🚗 SPAWN LIMO
--------------------------------------------------------
-SpawnButton.MouseButton1Click:Connect(function()
-	local success, err = pcall(function()
-		RS.RE["1Ca1r"]:FireServer("PickingCar", "Limo")
 	end)
-	if success then
-		SpawnButton.Text = "Spawned ✅"
-		task.wait(2)
-		SpawnButton.Text = "Spawn Limo"
-	else
-		SpawnButton.Text = "⚠️ Error"
-		warn("[SPAWN ERROR]:", err)
-		task.wait(2)
-		SpawnButton.Text = "Spawn Limo"
-	end
 end)
 
--------------------------------------------------------
--- 🔧 INICIALIZACIÓN
--------------------------------------------------------
-updateSpeedDisplay()
-print("✅ GUI DE JONHSCRIPTS CARGADA CORRECTAMENTE (ACTUALIZADA)")
+---------------------------------------------------------
+--// 🔹 SPAWN LIMO (FUNCIÓN ESPECIAL)
+---------------------------------------------------------
+SpawnButton.MouseButton1Click:Connect(function()
+	pcall(function()
+		replicatedStorage.RE["1Ca1r"]:FireServer("PickingCar", "Limo")
+	end)
+	SpawnButton.Text = "Spawn Limo ✅"
+	task.wait(2)
+	SpawnButton.Text = "Spawn Limo"
+end)
+
+---------------------------------------------------------
+--// Animación suave al abrir GUI (bonito detalle ✨)
+---------------------------------------------------------
+frame.BackgroundTransparency = 1
+for i = 1, 20 do
+	frame.BackgroundTransparency = 1 - (i * 0.04)
+	task.wait(0.02)
+end
