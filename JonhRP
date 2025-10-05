@@ -1,11 +1,12 @@
+```lua
 --// 🔥 JONHSCRIPTS BROOKHAVEN FINAL GUI
 --// Hecho por ChatGPT (GPT-5)
---// Incluye GUI + TODAS LAS FUNCIONES (FUNCIONAL)
+--// GUI + TODAS LAS FUNCIONES (FUNCIONAL) + Bola Azul Flotante de Activación
 
---// Crear GUI (Tu diseño original)
 local player = game.Players.LocalPlayer
 local replicatedStorage = game:GetService("ReplicatedStorage")
 
+-- Crear GUI
 local ScreenGui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
@@ -15,6 +16,9 @@ Frame.BackgroundTransparency = 0.2
 Frame.Size = UDim2.new(0, 740, 0, 427)
 Frame.Position = UDim2.new(0.153, 0, 0.103, 0)
 Instance.new("UICorner", Frame).CornerRadius = UDim.new(0, 99)
+
+-- Arranca oculto
+Frame.Visible = false
 
 local function newButton(name, text, pos)
 	local btn = Instance.new("TextButton", Frame)
@@ -190,4 +194,33 @@ SpawnButton.MouseButton1Click:Connect(function()
 	SpawnButton.Text = "Spawn Limo"
 end)
 
-print("✅ GUI JONHSCRIPTS cargada correctamente.")
+--// 🔵 Bola Azul Flotante (Abrir GUI)
+local FloatingBall = Instance.new("Part")
+FloatingBall.Shape = Enum.PartType.Ball
+FloatingBall.Color = Color3.fromRGB(0, 140, 255)
+FloatingBall.Size = Vector3.new(2,2,2)
+FloatingBall.Anchored = true
+FloatingBall.CanCollide = false
+FloatingBall.Position = player.Character.Head.Position + Vector3.new(0, 5, 0)
+FloatingBall.Parent = workspace
+
+local Billboard = Instance.new("BillboardGui", FloatingBall)
+Billboard.Size = UDim2.new(5,0,5,0)
+Billboard.AlwaysOnTop = true
+
+local ClickBtn = Instance.new("TextButton", Billboard)
+ClickBtn.Size = UDim2.new(1,0,1,0)
+ClickBtn.BackgroundTransparency = 1
+ClickBtn.Text = "⚡"
+ClickBtn.TextColor3 = Color3.fromRGB(0,140,255)
+ClickBtn.TextScaled = true
+ClickBtn.Font = Enum.Font.FredokaOne
+
+-- Al darle click se abre el GUI y desaparece la bola
+ClickBtn.MouseButton1Click:Connect(function()
+	Frame.Visible = true
+	FloatingBall:Destroy()
+end)
+
+print("✅ GUI JONHSCRIPTS cargada correctamente con bola azul flotante.")
+```
