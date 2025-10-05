@@ -11,21 +11,16 @@ local ScreenGui = Instance.new("ScreenGui")
 local Frame = Instance.new("Frame")
 local UICorner = Instance.new("UICorner")
 local TextLabel = Instance.new("TextLabel")
-local JumpButton = Instance.new("TextButton")
-local UICorner_2 = Instance.new("UICorner")
-local VelocityButton = Instance.new("TextButton")
-local UICorner_3 = Instance.new("UICorner")
-local NoclipButton = Instance.new("TextButton")
-local UICorner_4 = Instance.new("UICorner")
-local ESPButton = Instance.new("TextButton")
-local UICorner_6 = Instance.new("UICorner")
-local InvisibleButton = Instance.new("TextButton")
-local UICorner_7 = Instance.new("UICorner")
-local SpawnButton = Instance.new("TextButton")
-local UICorner_8 = Instance.new("UICorner")
 
--- Bola toggle
-local ToggleBall = Instance.new("Frame")
+local JumpButton = Instance.new("TextButton")
+local VelocityButton = Instance.new("TextButton")
+local NoclipButton = Instance.new("TextButton")
+local ESPButton = Instance.new("TextButton")
+local InvisibleButton = Instance.new("TextButton")
+local SpawnButton = Instance.new("TextButton")
+
+-- Bola toggle (usamos TextButton para que funcione el click)
+local ToggleBall = Instance.new("TextButton")
 local BallCorner = Instance.new("UICorner")
 
 -- GUI PROPERTIES
@@ -37,6 +32,7 @@ ToggleBall.Parent = ScreenGui
 ToggleBall.Size = UDim2.new(0, 50, 0, 50)
 ToggleBall.Position = UDim2.new(0.05, 0, 0.5, 0)
 ToggleBall.BackgroundColor3 = Color3.fromRGB(0, 102, 255)
+ToggleBall.Text = "" -- sin texto
 ToggleBall.Active = true
 ToggleBall.Draggable = true
 BallCorner.CornerRadius = UDim.new(1, 0)
@@ -44,7 +40,7 @@ BallCorner.Parent = ToggleBall
 
 -- Frame GUI
 Frame.Parent = ScreenGui
-Frame.BackgroundColor3 = Color3.new(0.203922, 0.156863, 0.239216)
+Frame.BackgroundColor3 = Color3.fromRGB(52, 40, 61)
 Frame.BackgroundTransparency = 0.2
 Frame.BorderSizePixel = 0
 Frame.Position = UDim2.new(0.153, 0, 0.103, 0)
@@ -64,7 +60,7 @@ TextLabel.Text = "JONHSCRIPTS BROOKHAVEN"
 TextLabel.TextColor3 = Color3.new(1, 1, 1)
 TextLabel.TextSize = 20
 
--- BOTONES
+-- FUNC PARA CREAR BOTONES
 local function MakeButton(btn, parent, pos, text)
 	btn.Parent = parent
 	btn.BackgroundColor3 = Color3.new(1,1,1)
@@ -88,7 +84,7 @@ MakeButton(InvisibleButton, Frame, UDim2.new(0.7875,0,0.468,0), "INVISIBLE")
 MakeButton(SpawnButton, Frame, UDim2.new(0.3975,0,0.666,0), "Spawn Limo")
 
 ----------------------------------------------------
--- FUNCIONES DE LOS BOTONES (Toggle Limpio)
+-- FUNCIONES DE LOS BOTONES
 ----------------------------------------------------
 
 -- INF JUMP
@@ -184,8 +180,6 @@ end)
 ----------------------------------------------------
 -- TOGGLE DE LA BOLA
 ----------------------------------------------------
-ToggleBall.InputBegan:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseButton1 then
-		Frame.Visible = not Frame.Visible
-	end
+ToggleBall.MouseButton1Click:Connect(function()
+	Frame.Visible = not Frame.Visible
 end)
