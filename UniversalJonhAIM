@@ -12,6 +12,8 @@ local camera = workspace.CurrentCamera
 local aimbotEnabled = false
 local target = nil
 local connection = nil
+local espConnection = nil
+local highlights = {}
 
 -- Create ScreenGui
 local ScreenGui = Instance.new("ScreenGui")
@@ -83,6 +85,14 @@ AbrirButton.Image = "rbxassetid://3570695787" -- Default Roblox icon
 AbrirButton.ImageColor3 = Color3.fromRGB(255, 0, 0)
 
 -- Aimbot Functions
+local function isEnemy(otherPlayer)
+    -- Check if player is on a different team
+    if player.Team == nil or otherPlayer.Team == nil then
+        return true -- No teams, everyone is an enemy
+    end
+    return player.Team ~= otherPlayer.Team
+end
+
 local function findNearestPlayer()
     local nearestPlayer = nil
     local shortestDistance = math.huge
@@ -94,7 +104,7 @@ local function findNearestPlayer()
     if not localHead then return nil end
     
     for _, otherPlayer in ipairs(Players:GetPlayers()) do
-        if otherPlayer ~= player and otherPlayer.Character then
+        if otherPlayer ~= player and otherPlayer.Character and isEnemy(otherPlayer) then
             local character = otherPlayer.Character
             local humanoid = character:FindFirstChild("Humanoid")
             local head = character:FindFirstChild("Head")
@@ -135,6 +145,59 @@ local function updateAimbot()
     camera.CFrame = CFrame.new(camera.CFrame.Position, targetHead.Position)
 end
 
+-- ESP Functions (Rainbow Highlight)
+local function getRainbowColor()
+    local hue = (tick() % 5) / 5 -- Rainbow cycle every 5 seconds
+    return Color3.fromHSV(hue, 1, 1)
+end
+
+local function createHighlight(character)
+    if character:FindFirstChild("ESPHighlight") then
+        return character.ESPHighlight
+    end
+    
+    local highlight = Instance.new("Highlight")
+    highlight.Name = "ESPHighlight"
+    highlight.Adornee = character
+    highlight.FillTransparency = 0.7
+    highlight.OutlineTransparency = 0
+    highlight.OutlineColor = Color3.fromRGB(255, 0, 0)
+    highlight.Parent = character
+    
+    return highlight
+end
+
+local function updateESP()
+    if not aimbotEnabled then return end
+    
+    local rainbowColor = getRainbowColor()
+    
+    for _, otherPlayer in ipairs(Players:GetPlayers()) do
+        if otherPlayer ~= player and otherPlayer.Character and isEnemy(otherPlayer) then
+            local character = otherPlayer.Character
+            local humanoid = character:FindFirstChild("Humanoid")
+            
+            if humanoid and humanoid.Health > 0 then
+                local highlight = createHighlight(character)
+                highlight.OutlineColor = rainbowColor
+                highlights[otherPlayer.UserId] = highlight
+            end
+        end
+    end
+end
+
+local function removeAllHighlights()
+    for _, otherPlayer in ipairs(Players:GetPlayers()) do
+        if otherPlayer.Character then
+            local highlight = otherPlayer.Character:FindFirstChild("ESPHighlight")
+            if highlight then
+                highlight:Destroy()
+            end
+        end
+    end
+    highlights = {}
+end
+
 -- Toggle Aimbot
 local function toggleAimbot()
     aimbotEnabled = not aimbotEnabled
@@ -145,15 +208,27 @@ local function toggleAimbot()
         
         -- Start the aimbot loop
         connection = RunService.RenderStepped:Connect(updateAimbot)
+        
+        -- Start the ESP loop
+        espConnection = RunService.Heartbeat:Connect(updateESP)
     else
         AimbotButton.Text = "AIMBOT HEAD"
         AimbotButton.TextColor3 = Color3.fromRGB(0, 0, 0)
         
-        -- Clean up the connection
+        -- Clean up the aimbot connection
         if connection then
             connection:Disconnect()
             connection = nil
         end
+        
+        -- Clean up the ESP connection
+        if espConnection then
+            espConnection:Disconnect()
+            espConnection = nil
+        end
+        
+        -- Remove all highlights
+        removeAllHighlights()
     end
 end
 
