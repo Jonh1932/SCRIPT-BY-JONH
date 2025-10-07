@@ -1,0 +1,210 @@
+-- Aimbot Script for Roblox
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+
+-- GUI Setup
+local player = Players.LocalPlayer
+local mouse = player:GetMouse()
+local camera = workspace.CurrentCamera
+
+-- Aimbot variables
+local aimbotEnabled = false
+local target = nil
+local connection = nil
+
+-- Create ScreenGui
+local ScreenGui = Instance.new("ScreenGui")
+local Aimbot = Instance.new("Frame")
+local UICorner = Instance.new("UICorner")
+local TextLabel = Instance.new("TextLabel")
+local AimbotButton = Instance.new("TextButton")
+local UICorner_2 = Instance.new("UICorner")
+local TextLabel_2 = Instance.new("TextLabel")
+local ImageLabel = Instance.new("ImageLabel")
+local AbrirButton = Instance.new("ImageButton")
+
+-- GUI Properties
+ScreenGui.Parent = player:WaitForChild("PlayerGui")
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+ScreenGui.ResetOnSpawn = false
+
+Aimbot.Name = "Aimbot"
+Aimbot.Parent = ScreenGui
+Aimbot.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+Aimbot.BackgroundTransparency = 0.400
+Aimbot.BorderSizePixel = 0
+Aimbot.Position = UDim2.new(0.5, -96, 0.4, 0) -- Centered horizontally
+Aimbot.Size = UDim2.new(0, 192, 0, 61)
+Aimbot.Visible = false -- Start hidden
+
+UICorner.Parent = Aimbot
+
+TextLabel.Parent = Aimbot
+TextLabel.BackgroundTransparency = 1
+TextLabel.Position = UDim2.new(0.3, 0, -0.4, 0)
+TextLabel.Size = UDim2.new(0, 100, 0, 25)
+TextLabel.Font = Enum.Font.FredokaOne
+TextLabel.Text = "Jonh Universal"
+TextLabel.TextColor3 = Color3.fromRGB(0, 0, 0)
+TextLabel.TextSize = 14
+
+AimbotButton.Name = "AimbotButton"
+AimbotButton.Parent = Aimbot
+AimbotButton.BackgroundColor3 = Color3.fromRGB(186, 174, 174)
+AimbotButton.BackgroundTransparency = 0.3
+AimbotButton.BorderSizePixel = 0
+AimbotButton.Position = UDim2.new(0.35, 0, 0.44, 0)
+AimbotButton.Size = UDim2.new(0, 89, 0, 25)
+AimbotButton.Font = Enum.Font.SourceSansBold
+AimbotButton.Text = "AIMBOT HEAD"
+AimbotButton.TextColor3 = Color3.fromRGB(0, 0, 0)
+AimbotButton.TextSize = 14
+
+UICorner_2.Parent = AimbotButton
+
+TextLabel_2.Parent = Aimbot
+TextLabel_2.BackgroundTransparency = 1
+TextLabel_2.Position = UDim2.new(0.22, 0, 0, 0)
+TextLabel_2.Size = UDim2.new(0, 108, 0, 27)
+TextLabel_2.Font = Enum.Font.FredokaOne
+TextLabel_2.Text = "Aimbot Menu"
+TextLabel_2.TextColor3 = Color3.fromRGB(0, 0, 0)
+TextLabel_2.TextSize = 14
+
+-- Open/Close button
+AbrirButton.Name = "AbrirButton"
+AbrirButton.Parent = ScreenGui
+AbrirButton.BackgroundTransparency = 1
+AbrirButton.BorderSizePixel = 0
+AbrirButton.Position = UDim2.new(0, 10, 0.5, -20)
+AbrirButton.Size = UDim2.new(0, 40, 0, 40)
+AbrirButton.Image = "rbxassetid://3570695787" -- Default Roblox icon
+AbrirButton.ImageColor3 = Color3.fromRGB(255, 0, 0)
+
+-- Aimbot Functions
+local function findNearestPlayer()
+    local nearestPlayer = nil
+    local shortestDistance = math.huge
+    local localCharacter = player.Character
+    
+    if not localCharacter then return nil end
+    
+    local localHead = localCharacter:FindFirstChild("Head")
+    if not localHead then return nil end
+    
+    for _, otherPlayer in ipairs(Players:GetPlayers()) do
+        if otherPlayer ~= player and otherPlayer.Character then
+            local character = otherPlayer.Character
+            local humanoid = character:FindFirstChild("Humanoid")
+            local head = character:FindFirstChild("Head")
+            
+            if humanoid and humanoid.Health > 0 and head then
+                local distance = (localHead.Position - head.Position).Magnitude
+                if distance < shortestDistance then
+                    shortestDistance = distance
+                    nearestPlayer = character
+                end
+            end
+        end
+    end
+    
+    return nearestPlayer
+end
+
+local function updateAimbot()
+    if not aimbotEnabled then return end
+    
+    local character = player.Character
+    if not character then return end
+    
+    local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
+    if not humanoidRootPart then return end
+    
+    target = findNearestPlayer()
+    if not target then return end
+    
+    local head = target:FindFirstChild("Head")
+    if not head then return end
+    
+    -- Calculate the direction to the target
+    local direction = (head.Position - camera.CFrame.Position).Unit
+    
+    -- Update the camera's CFrame to look at the target
+    camera.CFrame = CFrame.lookAt(camera.CFrame.Position, camera.CFrame.Position + direction)
+end
+
+-- Toggle Aimbot
+local function toggleAimbot()
+    aimbotEnabled = not aimbotEnabled
+    
+    if aimbotEnabled then
+        AimbotButton.Text = "AIMBOT ON"
+        AimbotButton.TextColor3 = Color3.fromRGB(0, 255, 0)
+        
+        -- Start the aimbot loop
+        connection = RunService.RenderStepped:Connect(updateAimbot)
+    else
+        AimbotButton.Text = "AIMBOT HEAD"
+        AimbotButton.TextColor3 = Color3.fromRGB(0, 0, 0)
+        
+        -- Clean up the connection
+        if connection then
+            connection:Disconnect()
+            connection = nil
+        end
+    end
+end
+
+-- Toggle Menu
+local function toggleMenu()
+    Aimbot.Visible = not Aimbot.Visible
+end
+
+-- Connect Events
+AimbotButton.MouseButton1Click:Connect(toggleAimbot)
+AbrirButton.MouseButton1Click:Connect(toggleMenu)
+
+-- Make the Aimbot frame draggable
+local dragging = false
+local dragInput, dragStart, startPos
+
+local function updateInput(input)
+    local delta = input.Position - dragStart
+    Aimbot.Position = UDim2.new(
+        startPos.X.Scale, 
+        startPos.X.Offset + delta.X, 
+        startPos.Y.Scale, 
+        startPos.Y.Offset + delta.Y
+    )
+end
+
+Aimbot.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = true
+        dragStart = input.Position
+        startPos = Aimbot.Position
+        
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                dragging = false
+            end
+        end)
+    end
+end)
+
+Aimbot.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement then
+        dragInput = input
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if input == dragInput and dragging then
+        updateInput(input)
+    end
+end)
+
+-- Initial setup
+AimbotButton.Text = "AIMBOT HEAD"
+AimbotButton.TextColor3 = Color3.fromRGB(0, 0, 0)
