@@ -121,17 +121,18 @@ local function updateAimbot()
     local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
     if not humanoidRootPart then return end
     
-    target = findNearestPlayer()
-    if not target then return end
+    -- Find the nearest enemy player's character
+    local targetCharacter = findNearestPlayer()
+    if not targetCharacter then return end
     
-    local head = target:FindFirstChild("Head")
-    if not head then return end
+    -- Make sure it's not the local player's character
+    if targetCharacter == character then return end
     
-    -- Calculate the direction to the target
-    local direction = (head.Position - camera.CFrame.Position).Unit
+    local targetHead = targetCharacter:FindFirstChild("Head")
+    if not targetHead then return end
     
-    -- Update the camera's CFrame to look at the target
-    camera.CFrame = CFrame.lookAt(camera.CFrame.Position, camera.CFrame.Position + direction)
+    -- Update the camera to look at the target's head
+    camera.CFrame = CFrame.new(camera.CFrame.Position, targetHead.Position)
 end
 
 -- Toggle Aimbot
