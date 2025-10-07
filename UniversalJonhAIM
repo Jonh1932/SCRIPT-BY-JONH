@@ -11,11 +11,11 @@ local camera = workspace.CurrentCamera
 -- Aimbot variables
 local aimbotEnabled = false
 local currentTarget = nil
-local currentTargetIndex = 1
 local connection = nil
 local espConnection = nil
 local highlights = {}
-local enemyPlayers = {}
+local lockTarget = false
+local lastCameraRotation = camera.CFrame.LookVector
 
 -- Create ScreenGui
 local ScreenGui = Instance.new("ScreenGui")
@@ -38,9 +38,11 @@ Aimbot.Parent = ScreenGui
 Aimbot.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
 Aimbot.BackgroundTransparency = 0.400
 Aimbot.BorderSizePixel = 0
-Aimbot.Position = UDim2.new(0.05, 0, 0.3, 0) -- Top left area, not centered
+Aimbot.Position = UDim2.new(0.05, 0, 0.3, 0)
 Aimbot.Size = UDim2.new(0, 192, 0, 61)
-Aimbot.Visible = false -- Start hidden
+Aimbot.Visible = false
+Aimbot.Active = true
+Aimbot.Draggable = true -- Make it draggable natively
 
 UICorner.Parent = Aimbot
 
@@ -95,36 +97,15 @@ local function isEnemy(otherPlayer)
     return player.Team ~= otherPlayer.Team
 end
 
-local function getAllEnemyPlayers()
-    local enemies = {}
-    local localCharacter = player.Character
-    
-    if not localCharacter then return enemies end
-    
-    for _, otherPlayer in ipairs(Players:GetPlayers()) do
-        if otherPlayer ~= player and otherPlayer.Character and isEnemy(otherPlayer) then
-            local character = otherPlayer.Character
-            local humanoid = character:FindFirstChild("Humanoid")
-            local head = character:FindFirstChild("Head")
-            
-            if humanoid and humanoid.Health > 0 and head then
-                table.insert(enemies, {player = otherPlayer, character = character})
-            end
-        end
-    end
-    
-    return enemies
-end
-
-local function findNearestPlayer()
+local function findNearestToCrosshair()
     local nearestPlayer = nil
-    local shortestDistance = math.huge
+    local smallestAngle = math.huge
     local localCharacter = player.Character
     
     if not localCharacter then return nil end
     
-    local localHead = localCharacter:FindFirstChild("Head")
-    if not localHead then return nil end
+    local cameraCFrame = camera.CFrame
+    local cameraDirection = cameraCFrame.LookVector
     
     for _, otherPlayer in ipairs(Players:GetPlayers()) do
         if otherPlayer ~= player and otherPlayer.Character and isEnemy(otherPlayer) then
@@ -133,9 +114,11 @@ local function findNearestPlayer()
             local head = character:FindFirstChild("Head")
             
             if humanoid and humanoid.Health > 0 and head then
-                local distance = (localHead.Position - head.Position).Magnitude
-                if distance < shortestDistance then
-                    shortestDistance = distance
+                local directionToTarget = (head.Position - cameraCFrame.Position).Unit
+                local angle = math.acos(cameraDirection:Dot(directionToTarget))
+                
+                if angle < smallestAngle then
+                    smallestAngle = angle
                     nearestPlayer = character
                 end
             end
@@ -145,51 +128,51 @@ local function findNearestPlayer()
     return nearestPlayer
 end
 
-local function switchTarget()
-    enemyPlayers = getAllEnemyPlayers()
-    
-    if #enemyPlayers == 0 then
-        currentTarget = nil
-        currentTargetIndex = 1
-        return
-    end
-    
-    currentTargetIndex = currentTargetIndex + 1
-    if currentTargetIndex > #enemyPlayers then
-        currentTargetIndex = 1
-    end
-    
-    currentTarget = enemyPlayers[currentTargetIndex].character
-end
-
 local function updateAimbot()
     if not aimbotEnabled then return end
     
     local character = player.Character
     if not character then return end
     
-    local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
-    if not humanoidRootPart then return end
+    -- Detect camera movement to switch targets
+    local currentCameraRotation = camera.CFrame.LookVector
+    local rotationDifference = (currentCameraRotation - lastCameraRotation).Magnitude
     
-    -- If no target selected, find nearest
-    if not currentTarget or not currentTarget.Parent then
-        currentTarget = findNearestPlayer()
+    -- If camera moved significantly, find new target
+    if rotationDifference > 0.1 then
+        lockTarget = false
+        lastCameraRotation = currentCameraRotation
+    end
+    
+    -- Find target based on crosshair position
+    if not lockTarget or not currentTarget or not currentTarget.Parent then
+        currentTarget = findNearestToCrosshair()
+        if currentTarget then
+            lockTarget = true
+        end
     end
     
     if not currentTarget then return end
     
     -- Make sure it's not the local player's character
-    if currentTarget == character then return end
+    if currentTarget == character then 
+        lockTarget = false
+        return 
+    end
     
     -- Check if target is still alive
     local targetHumanoid = currentTarget:FindFirstChild("Humanoid")
     if not targetHumanoid or targetHumanoid.Health <= 0 then
-        currentTarget = findNearestPlayer()
+        currentTarget = findNearestToCrosshair()
+        lockTarget = false
         if not currentTarget then return end
     end
     
     local targetHead = currentTarget:FindFirstChild("Head")
-    if not targetHead then return end
+    if not targetHead then 
+        lockTarget = false
+        return 
+    end
     
     -- Update the camera to look at the target's head
     camera.CFrame = CFrame.new(camera.CFrame.Position, targetHead.Position)
@@ -202,19 +185,22 @@ local function getRainbowColor()
 end
 
 local function createHighlight(character)
-    if character:FindFirstChild("ESPHighlight") then
-        return character.ESPHighlight
+    -- Remove old highlight if exists
+    local oldHighlight = character:FindFirstChild("ESPHighlight")
+    if oldHighlight then
+        oldHighlight:Destroy()
     end
     
     local highlight = Instance.new("Highlight")
     highlight.Name = "ESPHighlight"
     highlight.Adornee = character
-    highlight.FillTransparency = 0.5
-    highlight.FillColor = Color3.fromRGB(255, 0, 0)
+    highlight.FillTransparency = 0.6
+    highlight.FillColor = Color3.fromRGB(255, 255, 255)
     highlight.OutlineTransparency = 0
     highlight.OutlineColor = Color3.fromRGB(255, 0, 0)
     highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
-    highlight.Parent = character
+    highlight.Enabled = true
+    highlight.Parent = game:GetService("CoreGui")
     
     return highlight
 end
@@ -230,21 +216,30 @@ local function updateESP()
             local humanoid = character:FindFirstChild("Humanoid")
             
             if humanoid and humanoid.Health > 0 then
-                local highlight = createHighlight(character)
+                local highlight = highlights[otherPlayer.UserId]
+                
+                if not highlight or not highlight.Parent then
+                    highlight = createHighlight(character)
+                    highlights[otherPlayer.UserId] = highlight
+                end
+                
                 highlight.OutlineColor = rainbowColor
-                highlights[otherPlayer.UserId] = highlight
+                highlight.FillColor = rainbowColor
+            end
+        else
+            -- Remove highlight if player left or died
+            if highlights[otherPlayer.UserId] then
+                highlights[otherPlayer.UserId]:Destroy()
+                highlights[otherPlayer.UserId] = nil
             end
         end
     end
 end
 
 local function removeAllHighlights()
-    for _, otherPlayer in ipairs(Players:GetPlayers()) do
-        if otherPlayer.Character then
-            local highlight = otherPlayer.Character:FindFirstChild("ESPHighlight")
-            if highlight then
-                highlight:Destroy()
-            end
+    for userId, highlight in pairs(highlights) do
+        if highlight and highlight.Parent then
+            highlight:Destroy()
         end
     end
     highlights = {}
@@ -293,56 +288,8 @@ end
 AimbotButton.MouseButton1Click:Connect(toggleAimbot)
 AbrirButton.MouseButton1Click:Connect(toggleMenu)
 
--- Switch target with Tab key or Right Mouse Button
-UserInputService.InputBegan:Connect(function(input, gameProcessed)
-    if gameProcessed then return end
-    
-    if aimbotEnabled then
-        if input.KeyCode == Enum.KeyCode.Tab or input.UserInputType == Enum.UserInputType.MouseButton2 then
-            switchTarget()
-        end
-    end
-end)
-
--- Make the Aimbot frame draggable (improved)
-local dragging = false
-local dragInput, dragStart, startPos
-
-local function updateDrag(input)
-    local delta = input.Position - dragStart
-    Aimbot.Position = UDim2.new(
-        startPos.X.Scale, 
-        startPos.X.Offset + delta.X, 
-        startPos.Y.Scale, 
-        startPos.Y.Offset + delta.Y
-    )
-end
-
-TextLabel_2.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        dragging = true
-        dragStart = input.Position
-        startPos = Aimbot.Position
-        
-        input.Changed:Connect(function()
-            if input.UserInputState == Enum.UserInputState.End then
-                dragging = false
-            end
-        end)
-    end
-end)
-
-TextLabel_2.InputChanged:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseMovement then
-        dragInput = input
-    end
-end)
-
-UserInputService.InputChanged:Connect(function(input)
-    if input == dragInput and dragging then
-        updateDrag(input)
-    end
-end)
+-- The frame is already draggable with Aimbot.Draggable = true
+-- This works on both PC and Mobile automatically
 
 -- Initial setup
 AimbotButton.Text = "AIMBOT HEAD"
