@@ -16,6 +16,7 @@ local espConnection = nil
 local highlights = {}
 local lockTarget = false
 local lastCameraRotation = camera.CFrame.LookVector
+local smoothness = 0.2 -- Smoothness for camera movement
 
 -- Create ScreenGui
 local ScreenGui = Instance.new("ScreenGui")
@@ -139,7 +140,7 @@ local function updateAimbot()
     local rotationDifference = (currentCameraRotation - lastCameraRotation).Magnitude
     
     -- If camera moved significantly, find new target
-    if rotationDifference > 0.1 then
+    if rotationDifference > 0.15 then
         lockTarget = false
         lastCameraRotation = currentCameraRotation
     end
@@ -174,8 +175,12 @@ local function updateAimbot()
         return 
     end
     
-    -- Update the camera to look at the target's head
-    camera.CFrame = CFrame.new(camera.CFrame.Position, targetHead.Position)
+    -- Smooth camera movement towards target (better for mobile)
+    local targetCFrame = CFrame.new(camera.CFrame.Position, targetHead.Position)
+    camera.CFrame = camera.CFrame:Lerp(targetCFrame, smoothness)
+    
+    -- Update last rotation
+    lastCameraRotation = camera.CFrame.LookVector
 end
 
 -- ESP Functions (Rainbow Highlight)
@@ -253,11 +258,15 @@ local function toggleAimbot()
         AimbotButton.Text = "AIMBOT ON"
         AimbotButton.TextColor3 = Color3.fromRGB(0, 255, 0)
         
-        -- Start the aimbot loop
-        connection = RunService.RenderStepped:Connect(updateAimbot)
+        -- Start the aimbot loop (use Heartbeat for better mobile compatibility)
+        connection = RunService.Heartbeat:Connect(updateAimbot)
         
         -- Start the ESP loop
         espConnection = RunService.Heartbeat:Connect(updateESP)
+        
+        -- Reset camera lock
+        lockTarget = false
+        currentTarget = nil
     else
         AimbotButton.Text = "AIMBOT HEAD"
         AimbotButton.TextColor3 = Color3.fromRGB(0, 0, 0)
