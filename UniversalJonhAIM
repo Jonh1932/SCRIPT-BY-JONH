@@ -257,7 +257,7 @@ local function createHighlight(character)
     local highlight = Instance.new("Highlight")
     highlight.Name = "ESPHighlight"
     highlight.Adornee = character
-    highlight.FillTransparency = 0.5
+    highlight.FillTransparency = 0.8
     highlight.FillColor = Color3.fromRGB(255, 0, 0)
     highlight.OutlineTransparency = 0
     highlight.OutlineColor = Color3.fromRGB(255, 0, 0)
@@ -266,53 +266,6 @@ local function createHighlight(character)
     highlight.Parent = character
     
     return highlight
-end
-
-local function createNameTag(character, playerName, teamName)
-    if not character or not character.Parent then return nil end
-    
-    local head = character:FindFirstChild("Head")
-    if not head then return nil end
-    
-    -- Remove old nametag if exists
-    local oldTag = head:FindFirstChild("ESPNameTag")
-    if oldTag then
-        oldTag:Destroy()
-    end
-    
-    local billboardGui = Instance.new("BillboardGui")
-    billboardGui.Name = "ESPNameTag"
-    billboardGui.Adornee = head
-    billboardGui.Size = UDim2.new(0, 200, 0, 50)
-    billboardGui.StudsOffset = Vector3.new(0, 3, 0)
-    billboardGui.AlwaysOnTop = true
-    billboardGui.Parent = head
-    
-    local nameLabel = Instance.new("TextLabel")
-    nameLabel.Name = "NameLabel"
-    nameLabel.Size = UDim2.new(1, 0, 0.5, 0)
-    nameLabel.Position = UDim2.new(0, 0, 0, 0)
-    nameLabel.BackgroundTransparency = 1
-    nameLabel.Text = playerName
-    nameLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-    nameLabel.TextStrokeTransparency = 0.5
-    nameLabel.TextScaled = true
-    nameLabel.Font = Enum.Font.SourceSansBold
-    nameLabel.Parent = billboardGui
-    
-    local teamLabel = Instance.new("TextLabel")
-    teamLabel.Name = "TeamLabel"
-    teamLabel.Size = UDim2.new(1, 0, 0.5, 0)
-    teamLabel.Position = UDim2.new(0, 0, 0.5, 0)
-    teamLabel.BackgroundTransparency = 1
-    teamLabel.Text = teamName or "No Team"
-    teamLabel.TextColor3 = Color3.fromRGB(255, 100, 100)
-    teamLabel.TextStrokeTransparency = 0.5
-    teamLabel.TextScaled = true
-    teamLabel.Font = Enum.Font.SourceSans
-    teamLabel.Parent = billboardGui
-    
-    return billboardGui
 end
 
 local function updateESP()
@@ -344,34 +297,11 @@ local function updateESP()
                         highlight.OutlineColor = rainbowColor
                         highlight.FillColor = rainbowColor
                     end
-                    
-                    -- Create or update nametag
-                    local nameTag = head:FindFirstChild("ESPNameTag")
-                    if not nameTag then
-                        local teamName = "Enemy"
-                        if otherPlayer.Team then
-                            teamName = otherPlayer.Team.Name
-                        end
-                        createNameTag(character, otherPlayer.Name, teamName)
-                    else
-                        -- Update nametag color with rainbow
-                        local nameLabel = nameTag:FindFirstChild("NameLabel")
-                        if nameLabel then
-                            nameLabel.TextColor3 = rainbowColor
-                        end
-                    end
                 else
-                    -- Remove highlight and nametag if dead
+                    -- Remove highlight if dead
                     local highlight = character:FindFirstChild("ESPHighlight")
                     if highlight then
                         highlight:Destroy()
-                    end
-                    
-                    if head then
-                        local nameTag = head:FindFirstChild("ESPNameTag")
-                        if nameTag then
-                            nameTag:Destroy()
-                        end
                     end
                     
                     highlights[otherPlayer.UserId] = nil
@@ -382,20 +312,12 @@ local function updateESP()
 end
 
 local function removeAllHighlights()
-    -- Remove all highlights and nametags from all players
+    -- Remove all highlights from all players
     for _, otherPlayer in ipairs(Players:GetPlayers()) do
         if otherPlayer.Character then
             local highlight = otherPlayer.Character:FindFirstChild("ESPHighlight")
             if highlight then
                 highlight:Destroy()
-            end
-            
-            local head = otherPlayer.Character:FindFirstChild("Head")
-            if head then
-                local nameTag = head:FindFirstChild("ESPNameTag")
-                if nameTag then
-                    nameTag:Destroy()
-                end
             end
         end
     end
