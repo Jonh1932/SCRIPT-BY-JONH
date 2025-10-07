@@ -102,38 +102,50 @@ local function hasLineOfSight(targetHead)
     local character = player.Character
     if not character then return false end
     
-    local head = character:FindFirstChild("Head")
-    if not head then return false end
+    if not targetHead or not targetHead.Parent then return false end
     
-    -- Create a ray from camera to target
+    -- Create a ray from camera to target head
     local origin = camera.CFrame.Position
-    local direction = (targetHead.Position - origin)
+    local targetPosition = targetHead.Position
+    local direction = (targetPosition - origin)
+    local distance = direction.Magnitude
     
     local raycastParams = RaycastParams.new()
-    raycastParams.FilterDescendantsInstances = {character, camera}
+    raycastParams.FilterDescendantsInstances = {character}
     raycastParams.FilterType = Enum.RaycastFilterType.Blacklist
     raycastParams.IgnoreWater = true
     
-    local raycastResult = workspace:Raycast(origin, direction, raycastParams)
+    local raycastResult = workspace:Raycast(origin, direction.Unit * distance, raycastParams)
     
-    -- If ray hits the target's head or body parts, we have line of sight
-    if raycastResult then
-        local hitPart = raycastResult.Instance
-        local hitCharacter = hitPart.Parent
-        
-        -- Check if we hit the target character
-        if hitCharacter and hitCharacter:FindFirstChild("Humanoid") then
-            if hitCharacter == targetHead.Parent then
-                return true
-            end
-        end
-        
-        -- If we hit something else, no line of sight
-        return false
+    -- If no hit, clear line of sight
+    if not raycastResult then
+        return true
     end
     
-    -- If no hit, we have clear line of sight
-    return true
+    local hitPart = raycastResult.Instance
+    if not hitPart then return false end
+    
+    -- Check if the hit part belongs to the target character
+    local targetCharacter = targetHead.Parent
+    local hitParent = hitPart.Parent
+    
+    -- Check if we hit the target's character model
+    if hitParent == targetCharacter then
+        return true
+    end
+    
+    -- Check if we hit a part that's a child of the target character
+    if hitPart:IsDescendantOf(targetCharacter) then
+        return true
+    end
+    
+    -- Check for accessories or other attachments
+    if hitParent and hitParent.Parent == targetCharacter then
+        return true
+    end
+    
+    -- If we hit something else (wall, object, etc), no line of sight
+    return false
 end
 
 local function findNearestToCrosshair()
