@@ -98,6 +98,44 @@ local function isEnemy(otherPlayer)
     return player.Team ~= otherPlayer.Team
 end
 
+local function hasLineOfSight(targetHead)
+    local character = player.Character
+    if not character then return false end
+    
+    local head = character:FindFirstChild("Head")
+    if not head then return false end
+    
+    -- Create a ray from camera to target
+    local origin = camera.CFrame.Position
+    local direction = (targetHead.Position - origin)
+    
+    local raycastParams = RaycastParams.new()
+    raycastParams.FilterDescendantsInstances = {character, camera}
+    raycastParams.FilterType = Enum.RaycastFilterType.Blacklist
+    raycastParams.IgnoreWater = true
+    
+    local raycastResult = workspace:Raycast(origin, direction, raycastParams)
+    
+    -- If ray hits the target's head or body parts, we have line of sight
+    if raycastResult then
+        local hitPart = raycastResult.Instance
+        local hitCharacter = hitPart.Parent
+        
+        -- Check if we hit the target character
+        if hitCharacter and hitCharacter:FindFirstChild("Humanoid") then
+            if hitCharacter == targetHead.Parent then
+                return true
+            end
+        end
+        
+        -- If we hit something else, no line of sight
+        return false
+    end
+    
+    -- If no hit, we have clear line of sight
+    return true
+end
+
 local function findNearestToCrosshair()
     local nearestPlayer = nil
     local smallestAngle = math.huge
@@ -115,12 +153,15 @@ local function findNearestToCrosshair()
             local head = character:FindFirstChild("Head")
             
             if humanoid and humanoid.Health > 0 and head then
-                local directionToTarget = (head.Position - cameraCFrame.Position).Unit
-                local angle = math.acos(cameraDirection:Dot(directionToTarget))
-                
-                if angle < smallestAngle then
-                    smallestAngle = angle
-                    nearestPlayer = character
+                -- Check if we have line of sight to this target
+                if hasLineOfSight(head) then
+                    local directionToTarget = (head.Position - cameraCFrame.Position).Unit
+                    local angle = math.acos(cameraDirection:Dot(directionToTarget))
+                    
+                    if angle < smallestAngle then
+                        smallestAngle = angle
+                        nearestPlayer = character
+                    end
                 end
             end
         end
@@ -173,6 +214,15 @@ local function updateAimbot()
     if not targetHead then 
         lockTarget = false
         return 
+    end
+    
+    -- Check if we still have line of sight to current target
+    if not hasLineOfSight(targetHead) then
+        lockTarget = false
+        currentTarget = findNearestToCrosshair()
+        if not currentTarget then return end
+        targetHead = currentTarget:FindFirstChild("Head")
+        if not targetHead then return end
     end
     
     -- Smooth camera movement towards target (better for mobile)
