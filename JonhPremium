@@ -1,0 +1,164 @@
+-- 👑 Script hecho por ChatGPT (GPT-5)
+-- ✅ GUI moderno, con Noclip + Speed + botón flotante
+-- Colócalo en StarterPlayerScripts
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local player = Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+
+-- 🧱 Variables
+local noclipEnabled = false
+local speedEnabled = false
+local walkspeedNormal = 16
+local walkspeedBoost = 40
+
+-- 🖥️ Crear ScreenGui
+local gui = Instance.new("ScreenGui")
+gui.Name = "ModernNoclipGUI"
+gui.ResetOnSpawn = false -- 🔥 no se borra al morir
+gui.Parent = player:WaitForChild("PlayerGui")
+
+-- 🎨 Panel principal
+local frame = Instance.new("Frame")
+frame.Size = UDim2.new(0, 400, 0, 250)
+frame.Position = UDim2.new(0.5, -200, 0.5, -125)
+frame.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+frame.Parent = gui
+
+local corner = Instance.new("UICorner")
+corner.CornerRadius = UDim.new(0, 20)
+corner.Parent = frame
+
+local stroke = Instance.new("UIStroke")
+stroke.Thickness = 2
+stroke.Color = Color3.fromRGB(60, 60, 80)
+stroke.Parent = frame
+
+-- 🧾 Título
+local title = Instance.new("TextLabel")
+title.Text = "JONHSCRIPTS PREMIUM"
+title.Font = Enum.Font.GothamBold
+title.TextSize = 30
+title.TextColor3 = Color3.fromRGB(255, 255, 255)
+title.BackgroundTransparency = 1
+title.Size = UDim2.new(1, -40, 0, 50)
+title.Position = UDim2.new(0, 20, 0, 10)
+title.Parent = frame
+
+-- 📜 Subtítulo
+local subtitle = Instance.new("TextLabel")
+subtitle.Text = "Activador Noclip + Velocidad"
+subtitle.Font = Enum.Font.Gotham
+subtitle.TextSize = 18
+subtitle.TextColor3 = Color3.fromRGB(180, 180, 200)
+subtitle.BackgroundTransparency = 1
+subtitle.Size = UDim2.new(1, -40, 0, 30)
+subtitle.Position = UDim2.new(0, 20, 0, 60)
+subtitle.Parent = frame
+
+-- 🕹️ Botón Noclip
+local noclipButton = Instance.new("TextButton")
+noclipButton.Text = "Activar Noclip"
+noclipButton.Font = Enum.Font.GothamBold
+noclipButton.TextSize = 22
+noclipButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+noclipButton.BackgroundColor3 = Color3.fromRGB(80, 120, 255)
+noclipButton.Size = UDim2.new(0, 200, 0, 50)
+noclipButton.Position = UDim2.new(0.5, -100, 1, -70)
+noclipButton.Parent = frame
+
+local buttonCorner = Instance.new("UICorner")
+buttonCorner.CornerRadius = UDim.new(0, 14)
+buttonCorner.Parent = noclipButton
+
+-- ⚙️ Función de noclip
+local function setNoclip(enabled)
+	noclipEnabled = enabled
+	local humanoid = character:FindFirstChildOfClass("Humanoid")
+
+	if humanoid then
+		if enabled then
+			humanoid.WalkSpeed = walkspeedBoost
+		else
+			humanoid.WalkSpeed = walkspeedNormal
+		end
+	end
+end
+
+-- 💨 Loop para noclip
+RunService.Stepped:Connect(function()
+	if noclipEnabled and character then
+		for _, part in pairs(character:GetDescendants()) do
+			if part:IsA("BasePart") and part.CanCollide then
+				part.CanCollide = false
+			end
+		end
+	end
+end)
+
+-- 🧍 Detectar respawn
+player.CharacterAdded:Connect(function(char)
+	character = char
+	character:WaitForChild("Humanoid")
+	setNoclip(noclipEnabled) -- mantiene estado al reaparecer
+end)
+
+-- 🎯 Evento del botón
+noclipButton.MouseButton1Click:Connect(function()
+	noclipEnabled = not noclipEnabled
+	setNoclip(noclipEnabled)
+	if noclipEnabled then
+		noclipButton.Text = "Desactivar Noclip"
+		noclipButton.BackgroundColor3 = Color3.fromRGB(0, 255, 150)
+	else
+		noclipButton.Text = "Activar Noclip"
+		noclipButton.BackgroundColor3 = Color3.fromRGB(80, 120, 255)
+	end
+end)
+
+-- ⚪ Bola flotante (abrir/cerrar panel)
+local toggleBall = Instance.new("ImageButton")
+toggleBall.Name = "FloatingBall"
+toggleBall.Image = "rbxassetid://3926305904"
+toggleBall.ImageRectOffset = Vector2.new(4, 204)
+toggleBall.ImageRectSize = Vector2.new(36, 36)
+toggleBall.BackgroundTransparency = 1
+toggleBall.Size = UDim2.new(0, 50, 0, 50)
+toggleBall.Position = UDim2.new(0.05, 0, 0.85, 0)
+toggleBall.Parent = gui
+
+local dragging = false
+local dragInput, dragStart, startPos
+
+-- Permitir arrastrar la bola
+toggleBall.InputBegan:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 then
+		dragging = true
+		dragStart = input.Position
+		startPos = toggleBall.Position
+	end
+end)
+
+toggleBall.InputChanged:Connect(function(input)
+	if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+		local delta = input.Position - dragStart
+		toggleBall.Position = UDim2.new(
+			startPos.X.Scale,
+			startPos.X.Offset + delta.X,
+			startPos.Y.Scale,
+			startPos.Y.Offset + delta.Y
+		)
+	end
+end)
+
+toggleBall.InputEnded:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 then
+		dragging = false
+	end
+end)
+
+-- Mostrar / ocultar panel con la bola
+toggleBall.MouseButton1Click:Connect(function()
+	frame.Visible = not frame.Visible
+end)
