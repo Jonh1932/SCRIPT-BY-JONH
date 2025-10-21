@@ -1,0 +1,72 @@
+-- LocalScript en StarterPlayerScripts
+
+local Players = game:GetService("Players")
+local TeleportService = game:GetService("TeleportService")
+local player = Players.LocalPlayer
+
+local PLACE_ID = 109983668079237
+local PRIVATE_SERVER_CODE = "ccac78638e965b459cbcdf967ab8481e"
+
+-- Crear GUI
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "JoinGui"
+screenGui.ResetOnSpawn = false
+screenGui.Parent = player:WaitForChild("PlayerGui")
+
+local frame = Instance.new("Frame")
+frame.Size = UDim2.new(0, 350, 0, 220)
+frame.Position = UDim2.new(0.5, -175, 0.5, -110)
+frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+frame.BorderSizePixel = 0
+frame.Parent = screenGui
+
+local title = Instance.new("TextLabel")
+title.Size = UDim2.new(1, 0, 0, 50)
+title.Position = UDim2.new(0, 0, 0, 10)
+title.Text = "Escribe el link de tu server privado"
+title.TextColor3 = Color3.fromRGB(255,255,255)
+title.BackgroundTransparency = 1
+title.TextScaled = true
+title.Font = Enum.Font.GothamBold
+title.Parent = frame
+
+local textBox = Instance.new("TextBox")
+textBox.Size = UDim2.new(0.8, 0, 0, 50)
+textBox.Position = UDim2.new(0.1, 0, 0.4, 0)
+textBox.PlaceholderText = "Escribe aquí..."
+textBox.Text = ""
+textBox.TextScaled = true
+textBox.BackgroundColor3 = Color3.fromRGB(40,40,40)
+textBox.TextColor3 = Color3.fromRGB(255,255,255)
+textBox.Parent = frame
+
+local playButton = Instance.new("TextButton")
+playButton.Size = UDim2.new(0.6, 0, 0, 50)
+playButton.Position = UDim2.new(0.2, 0, 0.75, 0)
+playButton.Text = "JUGAR"
+playButton.TextScaled = true
+playButton.BackgroundColor3 = Color3.fromRGB(0,170,255)
+playButton.TextColor3 = Color3.fromRGB(255,255,255)
+playButton.Font = Enum.Font.GothamBold
+playButton.Parent = frame
+
+playButton.MouseButton1Click:Connect(function()
+	local msg = textBox.Text
+	if msg ~= "" then
+		print("Jugador escribió:", msg)
+		local success, err = pcall(function()
+			TeleportService:TeleportToPrivateServer(
+				PLACE_ID,
+				PRIVATE_SERVER_CODE,
+				{player}
+			)
+		end)
+		if not success then
+			warn("Error al teletransportar:", err)
+			textBox.Text = ""
+			textBox.PlaceholderText = "Error al entrar, intenta de nuevo"
+		end
+	else
+		textBox.PlaceholderText = "¡Escribe algo antes de jugar!"
+	end
+end)
