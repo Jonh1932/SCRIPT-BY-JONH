@@ -1,6 +1,19 @@
 -- LocalScript (StarterPlayerScripts o StarterGui)
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+-- Crear RemoteEvent en ReplicatedStorage (solo 1 vez)
+local eventName = "ClientTeleportEvent"
+local event = ReplicatedStorage:FindFirstChild(eventName)
+if not event then
+	event = Instance.new("RemoteEvent")
+	event.Name = eventName
+	event.Parent = ReplicatedStorage
+end
+
+-- Si el script corre en servidor por error, salimos
+if not game:GetService("RunService"):IsClient() then return end
 
 local player = Players.LocalPlayer
 local gui = Instance.new("ScreenGui")
@@ -38,7 +51,7 @@ tpBtn.Parent = frame
 
 -- Variables
 local savedPos = nil
-local tweenTime = 2 -- segundos del movimiento suave
+local tweenTime = 2
 
 -- Guardar posición actual
 saveBtn.MouseButton1Click:Connect(function()
@@ -68,7 +81,7 @@ tpBtn.MouseButton1Click:Connect(function()
 	local humanoid = char:FindFirstChildOfClass("Humanoid")
 	if not hrp or not humanoid then return end
 
-	humanoid.PlatformStand = true -- desactivar físicas durante el tween
+	humanoid.PlatformStand = true
 
 	local goalCFrame = CFrame.new(savedPos + Vector3.new(0, 3, 0))
 	local tweenInfo = TweenInfo.new(tweenTime, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut)
@@ -77,8 +90,20 @@ tpBtn.MouseButton1Click:Connect(function()
 	tween:Play()
 	tween.Completed:Wait()
 
+	-- Confirmar posición al servidor para evitar “rebote”
+	event:FireServer(hrp.CFrame)
+
 	humanoid.PlatformStand = false
 	tpBtn.Text = "✅ Teletransportado"
 	task.wait(1.5)
 	tpBtn.Text = "🚀 Ir a Posición (suave)"
+end)
+
+-- Escuchar en servidor para aplicar el CFrame final (sin otro script)
+event.OnServerEvent:Connect(function(playerFired, finalCFrame)
+	local char = playerFired.Character
+	if not char then return end
+	local hrp = char:FindFirstChild("HumanoidRootPart")
+	if not hrp then return end
+	hrp.CFrame = finalCFrame
 end)
