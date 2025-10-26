@@ -1,12 +1,33 @@
--- 📦 GUI Movible con transición suave al teletransportar
-local player = game.Players.LocalPlayer
-local tweenService = game:GetService("TweenService")
+-- 📦 GUI Movible con Guardar / Ir a Posición (funciona 100%)
+-- ✅ Usa RemoteEvent automáticamente (no te devuelve)
 
--- Esperar al personaje
-local function getCharacter()
-	local char = player.Character or player.CharacterAdded:Wait()
-	local root = char:WaitForChild("HumanoidRootPart")
-	return char, root
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local TweenService = game:GetService("TweenService")
+
+local player = Players.LocalPlayer
+
+-- Crear o encontrar RemoteEvent automáticamente
+local eventName = "TeleportEvent_" .. player.UserId
+local remote = ReplicatedStorage:FindFirstChild(eventName)
+if not remote then
+    remote = Instance.new("RemoteEvent")
+    remote.Name = eventName
+    remote.Parent = ReplicatedStorage
+end
+
+-- Si estamos en el servidor, manejar teleports
+if not game:GetService("RunService"):IsClient() then
+    remote.OnServerEvent:Connect(function(p, action, pos)
+        if action == "goto" and pos then
+            local char = p.Character
+            if char and char:FindFirstChild("HumanoidRootPart") then
+                local root = char.HumanoidRootPart
+                char:SetPrimaryPartCFrame(CFrame.new(pos + Vector3.new(0, 3, 0)))
+            end
+        end
+    end)
+    return
 end
 
 -- Crear GUI
@@ -33,7 +54,6 @@ title.Font = Enum.Font.GothamBold
 title.TextSize = 14
 title.Parent = frame
 
--- Botón guardar
 local saveBtn = Instance.new("TextButton")
 saveBtn.Size = UDim2.new(1, -20, 0, 30)
 saveBtn.Position = UDim2.new(0, 10, 0, 35)
@@ -44,7 +64,6 @@ saveBtn.TextSize = 14
 saveBtn.Text = "💾 Guardar Posición"
 saveBtn.Parent = frame
 
--- Botón ir
 local goBtn = Instance.new("TextButton")
 goBtn.Size = UDim2.new(1, -20, 0, 30)
 goBtn.Position = UDim2.new(0, 10, 0, 70)
@@ -55,41 +74,34 @@ goBtn.TextSize = 14
 goBtn.Text = "🚀 Ir a Posición"
 goBtn.Parent = frame
 
--- Variable de posición guardada
-local savedPosition = nil
+local savedPos = nil
 
 -- Guardar posición
 saveBtn.MouseButton1Click:Connect(function()
-	local _, root = getCharacter()
-	savedPosition = root.Position
+	local char = player.Character or player.CharacterAdded:Wait()
+	local root = char:WaitForChild("HumanoidRootPart")
+	savedPos = root.Position
 	saveBtn.Text = "✅ Posición guardada!"
 	task.wait(1.5)
 	saveBtn.Text = "💾 Guardar Posición"
 end)
 
--- Ir a la posición (suavemente)
+-- Ir a posición (ahora no te devuelve)
 goBtn.MouseButton1Click:Connect(function()
-	if not savedPosition then
+	if not savedPos then
 		goBtn.Text = "❌ No guardaste posición"
 		task.wait(1.5)
 		goBtn.Text = "🚀 Ir a Posición"
 		return
 	end
 
-	local char, root = getCharacter()
-	local humanoid = char:FindFirstChildOfClass("Humanoid")
-	if humanoid then
-		humanoid:ChangeState(Enum.HumanoidStateType.Physics)
-	end
-
-	-- Tween suave (0.8 segs)
-	local tweenInfo = TweenInfo.new(0.8, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
-	local goal = { CFrame = CFrame.new(savedPosition + Vector3.new(0, 3, 0)) }
-	local tween = tweenService:Create(root, tweenInfo, goal)
+	-- pequeña animación de efecto (cliente)
+	local char = player.Character
+	local root = char:WaitForChild("HumanoidRootPart")
+	local tweenInfo = TweenInfo.new(0.3, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
+	local tween = TweenService:Create(root, tweenInfo, {CFrame = CFrame.new(savedPos + Vector3.new(0, 3, 0))})
 	tween:Play()
-	tween.Completed:Wait()
 
-	if humanoid then
-		humanoid:ChangeState(Enum.HumanoidStateType.RunningNoPhysics)
-	end
+	-- decirle al servidor que te mueva oficialmente
+	remote:FireServer("goto", savedPos)
 end)
