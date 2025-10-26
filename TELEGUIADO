@@ -1,33 +1,12 @@
--- 📦 GUI Movible con Guardar / Ir a Posición (funciona 100%)
--- ✅ Usa RemoteEvent automáticamente (no te devuelve)
+-- 📦 GUI movible con movimiento suave (1 solo script)
+local player = game.Players.LocalPlayer
+local tweenService = game:GetService("TweenService")
 
-local Players = game:GetService("Players")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local TweenService = game:GetService("TweenService")
-
-local player = Players.LocalPlayer
-
--- Crear o encontrar RemoteEvent automáticamente
-local eventName = "TeleportEvent_" .. player.UserId
-local remote = ReplicatedStorage:FindFirstChild(eventName)
-if not remote then
-    remote = Instance.new("RemoteEvent")
-    remote.Name = eventName
-    remote.Parent = ReplicatedStorage
-end
-
--- Si estamos en el servidor, manejar teleports
-if not game:GetService("RunService"):IsClient() then
-    remote.OnServerEvent:Connect(function(p, action, pos)
-        if action == "goto" and pos then
-            local char = p.Character
-            if char and char:FindFirstChild("HumanoidRootPart") then
-                local root = char.HumanoidRootPart
-                char:SetPrimaryPartCFrame(CFrame.new(pos + Vector3.new(0, 3, 0)))
-            end
-        end
-    end)
-    return
+-- Esperar al personaje
+local function getCharacter()
+	local char = player.Character or player.CharacterAdded:Wait()
+	local root = char:WaitForChild("HumanoidRootPart")
+	return char, root
 end
 
 -- Crear GUI
@@ -39,15 +18,14 @@ gui.ResetOnSpawn = false
 local frame = Instance.new("Frame")
 frame.Size = UDim2.new(0, 220, 0, 110)
 frame.Position = UDim2.new(0.5, -110, 0.5, -55)
-frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-frame.BorderSizePixel = 0
+frame.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
 frame.Active = true
 frame.Draggable = true
 frame.Parent = gui
 
 local title = Instance.new("TextLabel")
 title.Size = UDim2.new(1, 0, 0, 25)
-title.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+title.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
 title.Text = "📍 Guardar / Ir"
 title.TextColor3 = Color3.new(1, 1, 1)
 title.Font = Enum.Font.GothamBold
@@ -78,15 +56,14 @@ local savedPos = nil
 
 -- Guardar posición
 saveBtn.MouseButton1Click:Connect(function()
-	local char = player.Character or player.CharacterAdded:Wait()
-	local root = char:WaitForChild("HumanoidRootPart")
+	local _, root = getCharacter()
 	savedPos = root.Position
 	saveBtn.Text = "✅ Posición guardada!"
 	task.wait(1.5)
 	saveBtn.Text = "💾 Guardar Posición"
 end)
 
--- Ir a posición (ahora no te devuelve)
+-- Ir a posición lentamente (simulación local)
 goBtn.MouseButton1Click:Connect(function()
 	if not savedPos then
 		goBtn.Text = "❌ No guardaste posición"
@@ -95,13 +72,21 @@ goBtn.MouseButton1Click:Connect(function()
 		return
 	end
 
-	-- pequeña animación de efecto (cliente)
-	local char = player.Character
-	local root = char:WaitForChild("HumanoidRootPart")
-	local tweenInfo = TweenInfo.new(0.3, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
-	local tween = TweenService:Create(root, tweenInfo, {CFrame = CFrame.new(savedPos + Vector3.new(0, 3, 0))})
-	tween:Play()
+	local _, root = getCharacter()
+	local humanoid = player.Character:FindFirstChildOfClass("Humanoid")
 
-	-- decirle al servidor que te mueva oficialmente
-	remote:FireServer("goto", savedPos)
+	if humanoid then
+		humanoid:Move(Vector3.new(0,0,0)) -- detener movimiento
+		humanoid.WalkSpeed = 0
+	end
+
+	-- Duración más larga para moverse lentamente (2 segundos)
+	local tweenInfo = TweenInfo.new(2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+	local tween = tweenService:Create(root, tweenInfo, {CFrame = CFrame.new(savedPos + Vector3.new(0, 3, 0))})
+	tween:Play()
+	tween.Completed:Wait()
+
+	if humanoid then
+		humanoid.WalkSpeed = 16 -- restaurar velocidad normal
+	end
 end)
