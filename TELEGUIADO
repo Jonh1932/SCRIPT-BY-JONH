@@ -1,0 +1,76 @@
+-- 📦 GUI Movible con Guardar / Ir a Posición
+local player = game.Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoidRoot = character:WaitForChild("HumanoidRootPart")
+
+-- Crear GUI
+local gui = Instance.new("ScreenGui")
+gui.Name = "TeleportGUI"
+gui.Parent = player:WaitForChild("PlayerGui")
+gui.ResetOnSpawn = false
+
+local frame = Instance.new("Frame")
+frame.Size = UDim2.new(0, 200, 0, 100)
+frame.Position = UDim2.new(0.5, -100, 0.5, -50)
+frame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+frame.BorderSizePixel = 0
+frame.Active = true
+frame.Draggable = true -- ✅ hace que el GUI se pueda mover
+frame.Parent = gui
+
+local title = Instance.new("TextLabel")
+title.Size = UDim2.new(1, 0, 0, 25)
+title.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+title.Text = "📍 Guardar Posición"
+title.TextColor3 = Color3.fromRGB(255, 255, 255)
+title.Font = Enum.Font.GothamBold
+title.TextSize = 14
+title.Parent = frame
+
+-- Botón para guardar posición
+local saveBtn = Instance.new("TextButton")
+saveBtn.Size = UDim2.new(1, -20, 0, 30)
+saveBtn.Position = UDim2.new(0, 10, 0, 35)
+saveBtn.BackgroundColor3 = Color3.fromRGB(60, 180, 75)
+saveBtn.Text = "💾 Guardar Posición"
+saveBtn.TextColor3 = Color3.new(1, 1, 1)
+saveBtn.Font = Enum.Font.GothamBold
+saveBtn.TextSize = 14
+saveBtn.Parent = frame
+
+-- Botón para ir a la posición guardada
+local goBtn = Instance.new("TextButton")
+goBtn.Size = UDim2.new(1, -20, 0, 30)
+goBtn.Position = UDim2.new(0, 10, 0, 70)
+goBtn.BackgroundColor3 = Color3.fromRGB(0, 120, 255)
+goBtn.Text = "🚀 Ir a Posición"
+goBtn.TextColor3 = Color3.new(1, 1, 1)
+goBtn.Font = Enum.Font.GothamBold
+goBtn.TextSize = 14
+goBtn.Parent = frame
+
+-- Variable para guardar la posición
+local savedPosition = nil
+
+-- Función guardar
+saveBtn.MouseButton1Click:Connect(function()
+	character = player.Character or player.CharacterAdded:Wait()
+	humanoidRoot = character:WaitForChild("HumanoidRootPart")
+	savedPosition = humanoidRoot.Position
+	saveBtn.Text = "✅ Posición guardada!"
+	task.wait(1.5)
+	saveBtn.Text = "💾 Guardar Posición"
+end)
+
+-- Función ir a la posición
+goBtn.MouseButton1Click:Connect(function()
+	if savedPosition then
+		character = player.Character or player.CharacterAdded:Wait()
+		humanoidRoot = character:WaitForChild("HumanoidRootPart")
+		humanoidRoot.CFrame = CFrame.new(savedPosition)
+	else
+		goBtn.Text = "❌ No hay posición guardada!"
+		task.wait(1.5)
+		goBtn.Text = "🚀 Ir a Posición"
+	end
+end)
