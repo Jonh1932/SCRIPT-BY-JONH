@@ -1,92 +1,84 @@
--- 📦 GUI movible con movimiento suave (1 solo script)
-local player = game.Players.LocalPlayer
-local tweenService = game:GetService("TweenService")
+-- LocalScript (StarterPlayerScripts o StarterGui)
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
 
--- Esperar al personaje
-local function getCharacter()
-	local char = player.Character or player.CharacterAdded:Wait()
-	local root = char:WaitForChild("HumanoidRootPart")
-	return char, root
-end
-
--- Crear GUI
+local player = Players.LocalPlayer
 local gui = Instance.new("ScreenGui")
-gui.Name = "TeleportGUI"
-gui.Parent = player:WaitForChild("PlayerGui")
+gui.Name = "TPGui"
 gui.ResetOnSpawn = false
+gui.Parent = player:WaitForChild("PlayerGui")
 
 local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0, 220, 0, 110)
-frame.Position = UDim2.new(0.5, -110, 0.5, -55)
-frame.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+frame.Size = UDim2.new(0, 220, 0, 120)
+frame.Position = UDim2.new(0.5, -110, 0.5, -60)
+frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 frame.Active = true
 frame.Draggable = true
 frame.Parent = gui
 
-local title = Instance.new("TextLabel")
-title.Size = UDim2.new(1, 0, 0, 25)
-title.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-title.Text = "📍 Guardar / Ir"
-title.TextColor3 = Color3.new(1, 1, 1)
-title.Font = Enum.Font.GothamBold
-title.TextSize = 14
-title.Parent = frame
-
 local saveBtn = Instance.new("TextButton")
-saveBtn.Size = UDim2.new(1, -20, 0, 30)
-saveBtn.Position = UDim2.new(0, 10, 0, 35)
-saveBtn.BackgroundColor3 = Color3.fromRGB(60, 180, 75)
-saveBtn.TextColor3 = Color3.new(1, 1, 1)
+saveBtn.Size = UDim2.new(1, -20, 0, 40)
+saveBtn.Position = UDim2.new(0, 10, 0, 10)
+saveBtn.Text = "💾 Guardar Posición"
+saveBtn.TextColor3 = Color3.new(1,1,1)
+saveBtn.BackgroundColor3 = Color3.fromRGB(70, 180, 80)
 saveBtn.Font = Enum.Font.GothamBold
 saveBtn.TextSize = 14
-saveBtn.Text = "💾 Guardar Posición"
 saveBtn.Parent = frame
 
-local goBtn = Instance.new("TextButton")
-goBtn.Size = UDim2.new(1, -20, 0, 30)
-goBtn.Position = UDim2.new(0, 10, 0, 70)
-goBtn.BackgroundColor3 = Color3.fromRGB(0, 120, 255)
-goBtn.TextColor3 = Color3.new(1, 1, 1)
-goBtn.Font = Enum.Font.GothamBold
-goBtn.TextSize = 14
-goBtn.Text = "🚀 Ir a Posición"
-goBtn.Parent = frame
+local tpBtn = Instance.new("TextButton")
+tpBtn.Size = UDim2.new(1, -20, 0, 40)
+tpBtn.Position = UDim2.new(0, 10, 0, 65)
+tpBtn.Text = "🚀 Ir a Posición (suave)"
+tpBtn.TextColor3 = Color3.new(1,1,1)
+tpBtn.BackgroundColor3 = Color3.fromRGB(60, 120, 220)
+tpBtn.Font = Enum.Font.GothamBold
+tpBtn.TextSize = 14
+tpBtn.Parent = frame
 
+-- Variables
 local savedPos = nil
+local tweenTime = 2 -- segundos del movimiento suave
 
--- Guardar posición
+-- Guardar posición actual
 saveBtn.MouseButton1Click:Connect(function()
-	local _, root = getCharacter()
+	local char = player.Character
+	if not char then return end
+	local root = char:FindFirstChild("HumanoidRootPart")
+	if not root then return end
+
 	savedPos = root.Position
-	saveBtn.Text = "✅ Posición guardada!"
+	saveBtn.Text = "✅ Posición guardada"
 	task.wait(1.5)
 	saveBtn.Text = "💾 Guardar Posición"
 end)
 
--- Ir a posición lentamente (simulación local)
-goBtn.MouseButton1Click:Connect(function()
+-- Ir a la posición guardada suavemente
+tpBtn.MouseButton1Click:Connect(function()
 	if not savedPos then
-		goBtn.Text = "❌ No guardaste posición"
+		tpBtn.Text = "❌ Sin posición"
 		task.wait(1.5)
-		goBtn.Text = "🚀 Ir a Posición"
+		tpBtn.Text = "🚀 Ir a Posición (suave)"
 		return
 	end
 
-	local _, root = getCharacter()
-	local humanoid = player.Character:FindFirstChildOfClass("Humanoid")
+	local char = player.Character
+	if not char then return end
+	local hrp = char:FindFirstChild("HumanoidRootPart")
+	local humanoid = char:FindFirstChildOfClass("Humanoid")
+	if not hrp or not humanoid then return end
 
-	if humanoid then
-		humanoid:Move(Vector3.new(0,0,0)) -- detener movimiento
-		humanoid.WalkSpeed = 0
-	end
+	humanoid.PlatformStand = true -- desactivar físicas durante el tween
 
-	-- Duración más larga para moverse lentamente (2 segundos)
-	local tweenInfo = TweenInfo.new(2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-	local tween = tweenService:Create(root, tweenInfo, {CFrame = CFrame.new(savedPos + Vector3.new(0, 3, 0))})
+	local goalCFrame = CFrame.new(savedPos + Vector3.new(0, 3, 0))
+	local tweenInfo = TweenInfo.new(tweenTime, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut)
+	local tween = TweenService:Create(hrp, tweenInfo, {CFrame = goalCFrame})
+
 	tween:Play()
 	tween.Completed:Wait()
 
-	if humanoid then
-		humanoid.WalkSpeed = 16 -- restaurar velocidad normal
-	end
+	humanoid.PlatformStand = false
+	tpBtn.Text = "✅ Teletransportado"
+	task.wait(1.5)
+	tpBtn.Text = "🚀 Ir a Posición (suave)"
 end)
