@@ -1,109 +1,129 @@
--- LocalScript (StarterPlayerScripts o StarterGui)
-local Players = game:GetService("Players")
-local TweenService = game:GetService("TweenService")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
+-- Script para crear una interfaz gráfica movible en Roblox
 
--- Crear RemoteEvent en ReplicatedStorage (solo 1 vez)
-local eventName = "ClientTeleportEvent"
-local event = ReplicatedStorage:FindFirstChild(eventName)
-if not event then
-	event = Instance.new("RemoteEvent")
-	event.Name = eventName
-	event.Parent = ReplicatedStorage
+-- Crear un ScreenGui
+local screenGui = Instance.new("ScreenGui")
+screenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+
+-- Crear un Frame para contener los botones
+local frame = Instance.new("Frame")
+frame.Size = UDim2.new(0, 200, 0, 150)
+frame.Position = UDim2.new(0.5, -100, 0.5, -75)
+frame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+frame.BorderSizePixel = 1
+frame.Parent = screenGui
+
+-- Crear un TextButton para guardar la posición
+local saveButton = Instance.new("TextButton")
+saveButton.Size = UDim2.new(0, 180, 0, 40)
+saveButton.Position = UDim2.new(0.5, -90, 0, 10)
+saveButton.Text = "Guardar Posición"
+saveButton.BackgroundColor3 = Color3.fromRGB(0, 128, 0)
+saveButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+saveButton.Parent = frame
+
+-- Crear un TextButton para teletransportarse a la posición guardada
+local teleportButton = Instance.new("TextButton")
+teleportButton.Size = UDim2.new(0, 180, 0, 40)
+teleportButton.Position = UDim2.new(0.5, -90, 0, 60)
+teleportButton.Text = "Teletransportar"
+teleportButton.BackgroundColor3 = Color3.fromRGB(0, 0, 128)
+teleportButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+teleportButton.Parent = frame
+
+-- Crear un TextButton transparente para arrastrar el frame
+local dragButton = Instance.new("TextButton")
+dragButton.Size = UDim2.new(1, 0, 0, 30)
+dragButton.Position = UDim2.new(0, 0, 0, 0)
+dragButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+dragButton.BackgroundTransparency = 1
+dragButton.BorderSizePixel = 0
+dragButton.Text = ""
+dragButton.Parent = frame
+
+-- Variable para almacenar la posición inicial del mouse
+local dragging
+local dragInput
+local dragStart
+local startPos
+
+-- Función para iniciar el arrastre
+local function update(input)
+	local delta = input.Position - dragStart
+	frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
 end
 
--- Si el script corre en servidor por error, salimos
-if not game:GetService("RunService"):IsClient() then return end
+-- Conectar los eventos de arrastre
+dragButton.InputBegan:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+		dragging = true
+		dragStart = input.Position
+		startPos = frame.Position
 
-local player = Players.LocalPlayer
-local gui = Instance.new("ScreenGui")
-gui.Name = "TPGui"
-gui.ResetOnSpawn = false
-gui.Parent = player:WaitForChild("PlayerGui")
-
-local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0, 220, 0, 120)
-frame.Position = UDim2.new(0.5, -110, 0.5, -60)
-frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-frame.Active = true
-frame.Draggable = true
-frame.Parent = gui
-
-local saveBtn = Instance.new("TextButton")
-saveBtn.Size = UDim2.new(1, -20, 0, 40)
-saveBtn.Position = UDim2.new(0, 10, 0, 10)
-saveBtn.Text = "💾 Guardar Posición"
-saveBtn.TextColor3 = Color3.new(1,1,1)
-saveBtn.BackgroundColor3 = Color3.fromRGB(70, 180, 80)
-saveBtn.Font = Enum.Font.GothamBold
-saveBtn.TextSize = 14
-saveBtn.Parent = frame
-
-local tpBtn = Instance.new("TextButton")
-tpBtn.Size = UDim2.new(1, -20, 0, 40)
-tpBtn.Position = UDim2.new(0, 10, 0, 65)
-tpBtn.Text = "🚀 Ir a Posición (suave)"
-tpBtn.TextColor3 = Color3.new(1,1,1)
-tpBtn.BackgroundColor3 = Color3.fromRGB(60, 120, 220)
-tpBtn.Font = Enum.Font.GothamBold
-tpBtn.TextSize = 14
-tpBtn.Parent = frame
-
--- Variables
-local savedPos = nil
-local tweenTime = 2
-
--- Guardar posición actual
-saveBtn.MouseButton1Click:Connect(function()
-	local char = player.Character
-	if not char then return end
-	local root = char:FindFirstChild("HumanoidRootPart")
-	if not root then return end
-
-	savedPos = root.Position
-	saveBtn.Text = "✅ Posición guardada"
-	task.wait(1.5)
-	saveBtn.Text = "💾 Guardar Posición"
-end)
-
--- Ir a la posición guardada suavemente
-tpBtn.MouseButton1Click:Connect(function()
-	if not savedPos then
-		tpBtn.Text = "❌ Sin posición"
-		task.wait(1.5)
-		tpBtn.Text = "🚀 Ir a Posición (suave)"
-		return
+		input.Changed:Connect(function()
+			if input.UserInputState == Enum.UserInputState.End then
+				dragging = false
+			end
+		end)
 	end
-
-	local char = player.Character
-	if not char then return end
-	local hrp = char:FindFirstChild("HumanoidRootPart")
-	local humanoid = char:FindFirstChildOfClass("Humanoid")
-	if not hrp or not humanoid then return end
-
-	humanoid.PlatformStand = true
-
-	local goalCFrame = CFrame.new(savedPos + Vector3.new(0, 3, 0))
-	local tweenInfo = TweenInfo.new(tweenTime, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut)
-	local tween = TweenService:Create(hrp, tweenInfo, {CFrame = goalCFrame})
-
-	tween:Play()
-	tween.Completed:Wait()
-
-	-- Confirmar posición al servidor para evitar “rebote”
-	event:FireServer(hrp.CFrame)
-
-	humanoid.PlatformStand = false
-	tpBtn.Text = "✅ Teletransportado"
-	task.wait(1.5)
-	tpBtn.Text = "🚀 Ir a Posición (suave)"
 end)
 
--- Escuchar en servidor para aplicar el CFrame final (sin otro script)
-event.OnServerEvent:Connect(function(playerFired, finalCFrame)
-	local char = playerFired.Character
-	if not char then return end
-	local hrp = char:FindFirstChild("HumanoidRootPart")
-	if not hrp then return end
-	hrp.CFrame = finalCFrame
+dragButton.InputChanged:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+		dragInput = input
+	end
+end)
+
+game:GetService("UserInputService").InputChanged:Connect(function(input)
+	if input == dragInput and dragging then
+		update(input)
+	end
+end)
+
+-- Función para guardar la posición
+local function savePosition()
+	local player = game.Players.LocalPlayer
+	local character = player.Character or player.CharacterAdded:Wait()
+	local position = character:GetPrimaryPartCFrame().Position
+	return position
+end
+
+-- Función para teletransportarse a una posición específica y poner al jugador en ragdoll
+local function teleportToPosition(targetPosition)
+	local player = game.Players.LocalPlayer
+	local character = player.Character or player.CharacterAdded:Wait()
+	local humanoid = character:WaitForChild("Humanoid")
+	local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+
+	-- Desactivar la gravedad temporalmente para evitar problemas
+	local gravity = humanoidRootPart.AssemblyLinearVelocity
+	humanoidRootPart.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
+
+	-- Teletransportar al jugador
+	humanoidRootPart.CFrame = CFrame.new(targetPosition)
+
+	-- Deshabilitar el Humanoid para poner al jugador en ragdoll
+	humanoid.PlatformStand = true
+	wait(0.1) -- Esperar un momento para asegurar el teletransporte
+	humanoid.PlatformStand = false
+
+	-- Restaurar la gravedad
+	humanoidRootPart.AssemblyLinearVelocity = gravity
+end
+
+-- Variable para almacenar la posición guardada
+local savedPosition
+
+-- Conectar los botones a las funciones
+saveButton.MouseButton1Click:Connect(function()
+	savedPosition = savePosition()
+	print("Posición guardada:", savedPosition)
+end)
+
+teleportButton.MouseButton1Click:Connect(function()
+	if savedPosition then
+		teleportToPosition(savedPosition)
+		print("Teletransportado a la posición guardada y puesto en ragdoll")
+	else
+		print("Primero guarda una posición")
+	end
 end)
