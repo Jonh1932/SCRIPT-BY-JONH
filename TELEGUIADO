@@ -48,66 +48,71 @@ local startPos
 
 -- Función para iniciar el arrastre
 local function update(input)
-	local delta = input.Position - dragStart
-	frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+    local delta = input.Position - dragStart
+    frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
 end
 
 -- Conectar los eventos de arrastre
 dragButton.InputBegan:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-		dragging = true
-		dragStart = input.Position
-		startPos = frame.Position
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = true
+        dragStart = input.Position
+        startPos = frame.Position
 
-		input.Changed:Connect(function()
-			if input.UserInputState == Enum.UserInputState.End then
-				dragging = false
-			end
-		end)
-	end
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                dragging = false
+            end
+        end)
+    end
 end)
 
 dragButton.InputChanged:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
-		dragInput = input
-	end
+    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+        dragInput = input
+    end
 end)
 
 game:GetService("UserInputService").InputChanged:Connect(function(input)
-	if input == dragInput and dragging then
-		update(input)
-	end
+    if input == dragInput and dragging then
+        update(input)
+    end
 end)
 
 -- Función para guardar la posición
 local function savePosition()
-	local player = game.Players.LocalPlayer
-	local character = player.Character or player.CharacterAdded:Wait()
-	local position = character:GetPrimaryPartCFrame().Position
-	return position
+    local player = game.Players.LocalPlayer
+    local character = player.Character or player.CharacterAdded:Wait()
+    local position = character:GetPrimaryPartCFrame().Position
+    return position
 end
 
 -- Función para teletransportarse a una posición específica y poner al jugador en ragdoll
 local function teleportToPosition(targetPosition)
-	local player = game.Players.LocalPlayer
-	local character = player.Character or player.CharacterAdded:Wait()
-	local humanoid = character:WaitForChild("Humanoid")
-	local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+    local player = game.Players.LocalPlayer
+    local character = player.Character or player.CharacterAdded:Wait()
+    local humanoid = character:WaitForChild("Humanoid")
+    local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
 
-	-- Desactivar la gravedad temporalmente para evitar problemas
-	local gravity = humanoidRootPart.AssemblyLinearVelocity
-	humanoidRootPart.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
+    -- Desactivar la gravedad temporalmente para evitar problemas
+    local gravity = humanoidRootPart.AssemblyLinearVelocity
+    humanoidRootPart.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
 
-	-- Teletransportar al jugador
-	humanoidRootPart.CFrame = CFrame.new(targetPosition)
+    -- Teletransportar al jugador
+    humanoidRootPart.CFrame = CFrame.new(targetPosition)
 
-	-- Deshabilitar el Humanoid para poner al jugador en ragdoll
-	humanoid.PlatformStand = true
-	wait(0.1) -- Esperar un momento para asegurar el teletransporte
-	humanoid.PlatformStand = false
+    -- Deshabilitar el Humanoid para poner al jugador en ragdoll
+    humanoid.PlatformStand = true
+    wait(0.1) -- Esperar un momento para asegurar el teletransporte
+    humanoid.PlatformStand = false
 
-	-- Restaurar la gravedad
-	humanoidRootPart.AssemblyLinearVelocity = gravity
+    -- Desactivar el Humanoid para simular una caída
+    humanoid.PlatformStand = true
+    wait(0.5) -- Esperar un momento para que la caída se complete
+    humanoid.PlatformStand = false
+
+    -- Restaurar la gravedad
+    humanoidRootPart.AssemblyLinearVelocity = gravity
 end
 
 -- Variable para almacenar la posición guardada
@@ -115,15 +120,15 @@ local savedPosition
 
 -- Conectar los botones a las funciones
 saveButton.MouseButton1Click:Connect(function()
-	savedPosition = savePosition()
-	print("Posición guardada:", savedPosition)
+    savedPosition = savePosition()
+    print("Posición guardada:", savedPosition)
 end)
 
 teleportButton.MouseButton1Click:Connect(function()
-	if savedPosition then
-		teleportToPosition(savedPosition)
-		print("Teletransportado a la posición guardada y puesto en ragdoll")
-	else
-		print("Primero guarda una posición")
-	end
+    if savedPosition then
+        teleportToPosition(savedPosition)
+        print("Teletransportado a la posición guardada y puesto en ragdoll")
+    else
+        print("Primero guarda una posición")
+    end
 end)
