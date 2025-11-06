@@ -132,3 +132,23 @@ teleportButton.MouseButton1Click:Connect(function()
         print("Primero guarda una posición")
     end
 end)
+
+-- Función para evitar que el servidor devuelva al jugador
+local function preventRespawn()
+    local player = game.Players.LocalPlayer
+    local character = player.Character or player.CharacterAdded:Wait()
+    local humanoid = character:WaitForChild("Humanoid")
+
+    -- Conectar a la función de respawn del Humanoid
+    humanoid.Died:Connect(function()
+        wait(0.1) -- Esperar un momento para asegurar que el respawn se complete
+        local newCharacter = player.Character or player.CharacterAdded:Wait()
+        local newHumanoid = newCharacter:WaitForChild("Humanoid")
+        newHumanoid.PlatformStand = true
+        wait(0.5)
+        newHumanoid.PlatformStand = false
+    end)
+end
+
+-- Llamar a la función para evitar respawn
+preventRespawn()
