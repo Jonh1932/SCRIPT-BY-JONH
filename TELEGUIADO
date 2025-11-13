@@ -1,5 +1,5 @@
--- 🌈 JOHN SCRIPT MODERNO COMPLETO
--- GUI con botones rainbow, minimizable y botón flotante movible
+-- 🌈 JOHN SCRIPT COMPLETO Y FUNCIONAL
+-- Roblox GUI moderna con botones rainbow, minimizable y botón flotante movible
 
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
@@ -10,75 +10,21 @@ local PlayerGui = player:WaitForChild("PlayerGui")
 -- BOTÓN REDONDO FLOTANTE (MOVIBLE)
 -- =========================
 local toggleButton = Instance.new("TextButton")
-toggleButton.Size = UDim2.new(0, 50, 0, 50)
-toggleButton.Position = UDim2.new(0.9, 0, 0.8, 0)
-toggleButton.AnchorPoint = Vector2.new(0.5, 0.5)
+toggleButton.Size = UDim2.new(0,50,0,50)
+toggleButton.Position = UDim2.new(0.9,0,0.8,0)
+toggleButton.AnchorPoint = Vector2.new(0.5,0.5)
 toggleButton.Text = "⚙️"
 toggleButton.Font = Enum.Font.GothamBold
 toggleButton.TextScaled = true
-toggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+toggleButton.TextColor3 = Color3.fromRGB(255,255,255)
 toggleButton.BackgroundColor3 = Color3.fromRGB(30,30,30)
 toggleButton.BorderSizePixel = 0
-toggleButton.Name = "ToggleButton"
+toggleButton.ZIndex = 5
 toggleButton.Parent = PlayerGui
 
 local tbCorner = Instance.new("UICorner")
 tbCorner.CornerRadius = UDim.new(0,25)
 tbCorner.Parent = toggleButton
-
--- Gradiente rainbow animado
-local tbGradient = Instance.new("UIGradient")
-tbGradient.Color = ColorSequence.new({
-	ColorSequenceKeypoint.new(0, Color3.fromRGB(255,0,0)),
-	ColorSequenceKeypoint.new(0.16, Color3.fromRGB(255,127,0)),
-	ColorSequenceKeypoint.new(0.33, Color3.fromRGB(255,255,0)),
-	ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0,255,0)),
-	ColorSequenceKeypoint.new(0.66, Color3.fromRGB(0,0,255)),
-	ColorSequenceKeypoint.new(0.83, Color3.fromRGB(75,0,130)),
-	ColorSequenceKeypoint.new(1, Color3.fromRGB(148,0,211)),
-})
-tbGradient.Rotation = 0
-tbGradient.Parent = toggleButton
-
--- Animación gradiente del botón flotante
-task.spawn(function()
-	while true do
-		for i=0,360 do
-			tbGradient.Rotation = i
-			task.wait(0.03)
-		end
-	end
-end)
-
--- Hacer movible el botón
-local dragging, dragInput, dragStart, startPos
-local function update(input)
-	local delta = input.Position - dragStart
-	toggleButton.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-end
-
-toggleButton.InputBegan:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseButton1 then
-		dragging = true
-		dragStart = input.Position
-		startPos = toggleButton.Position
-		input.Changed:Connect(function()
-			if input.UserInputState == Enum.UserInputState.End then
-				dragging = false
-			end
-		end)
-	end
-end)
-toggleButton.InputChanged:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseMovement then
-		dragInput = input
-	end
-end)
-UserInputService.InputChanged:Connect(function(input)
-	if input == dragInput and dragging then
-		update(input)
-	end
-end)
 
 -- =========================
 -- CREAR GUI PRINCIPAL
@@ -86,11 +32,11 @@ end)
 local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "JohnScriptUI"
 screenGui.Parent = PlayerGui
-screenGui.Enabled = false -- inicia cerrado
+screenGui.Enabled = false -- empieza cerrado
 
 local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0, 260, 0, 220)
-frame.Position = UDim2.new(0.5, -130, 0.5, -110)
+frame.Size = UDim2.new(0,260,0,220)
+frame.Position = UDim2.new(0.5,-130,0.5,-110)
 frame.BackgroundColor3 = Color3.fromRGB(25,25,25)
 frame.BorderSizePixel = 0
 frame.Parent = screenGui
@@ -98,18 +44,6 @@ frame.Parent = screenGui
 local corner = Instance.new("UICorner")
 corner.CornerRadius = UDim.new(0,12)
 corner.Parent = frame
-
--- Sombra
-local shadow = Instance.new("ImageLabel")
-shadow.Name = "Shadow"
-shadow.AnchorPoint = Vector2.new(0.5,0.5)
-shadow.Position = UDim2.new(0.5,0,0.5,4)
-shadow.Size = UDim2.new(1,30,1,30)
-shadow.ZIndex = -1
-shadow.BackgroundTransparency = 1
-shadow.Image = "rbxassetid://1316045217"
-shadow.ImageTransparency = 0.45
-shadow.Parent = frame
 
 -- Título
 local title = Instance.new("TextLabel")
@@ -126,7 +60,6 @@ title.Parent = frame
 local minButton = Instance.new("TextButton")
 minButton.Size = UDim2.new(0,30,0,30)
 minButton.Position = UDim2.new(1,-35,0,2)
-minButton.AnchorPoint = Vector2.new(0,0)
 minButton.Text = "–"
 minButton.Font = Enum.Font.GothamBold
 minButton.TextScaled = true
@@ -148,34 +81,10 @@ minButton.MouseButton1Click:Connect(function()
 	end
 end)
 
--- Gradiente rainbow para la ventana
-local gradient = Instance.new("UIGradient")
-gradient.Color = ColorSequence.new({
-	ColorSequenceKeypoint.new(0, Color3.fromRGB(255,0,0)),
-	ColorSequenceKeypoint.new(0.16, Color3.fromRGB(255,127,0)),
-	ColorSequenceKeypoint.new(0.33, Color3.fromRGB(255,255,0)),
-	ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0,255,0)),
-	ColorSequenceKeypoint.new(0.66, Color3.fromRGB(0,0,255)),
-	ColorSequenceKeypoint.new(0.83, Color3.fromRGB(75,0,130)),
-	ColorSequenceKeypoint.new(1, Color3.fromRGB(148,0,211)),
-})
-gradient.Rotation = 0
-gradient.Parent = frame
-
--- Animación gradiente ventana
-task.spawn(function()
-	while true do
-		for i=0,360 do
-			gradient.Rotation = i
-			task.wait(0.03)
-		end
-	end
-end)
-
 -- =========================
--- BOTONES PRINCIPALES RAINBOW
+-- BOTONES PRINCIPALES (RAINBOW)
 -- =========================
-local function createButton(text,posY,colorStart,colorEnd)
+local function createButton(text,posY)
 	local btn = Instance.new("TextButton")
 	btn.Size = UDim2.new(0,220,0,45)
 	btn.Position = UDim2.new(0.5,-110,0,posY)
@@ -192,11 +101,18 @@ local function createButton(text,posY,colorStart,colorEnd)
 	corner.Parent = btn
 	
 	local grad = Instance.new("UIGradient")
-	grad.Color = ColorSequence.new({ColorSequenceKeypoint.new(0,colorStart),ColorSequenceKeypoint.new(1,colorEnd)})
+	grad.Color = ColorSequence.new({
+		ColorSequenceKeypoint.new(0,Color3.fromRGB(255,0,0)),
+		ColorSequenceKeypoint.new(0.16,Color3.fromRGB(255,127,0)),
+		ColorSequenceKeypoint.new(0.33,Color3.fromRGB(255,255,0)),
+		ColorSequenceKeypoint.new(0.5,Color3.fromRGB(0,255,0)),
+		ColorSequenceKeypoint.new(0.66,Color3.fromRGB(0,0,255)),
+		ColorSequenceKeypoint.new(0.83,Color3.fromRGB(75,0,130)),
+		ColorSequenceKeypoint.new(1,Color3.fromRGB(148,0,211))
+	})
 	grad.Rotation = 90
 	grad.Parent = btn
 	
-	-- animación "cayendo"
 	task.spawn(function()
 		while true do
 			for r=0,360 do
@@ -212,14 +128,15 @@ local function createButton(text,posY,colorStart,colorEnd)
 	btn.MouseLeave:Connect(function()
 		btn.BackgroundColor3 = Color3.fromRGB(30,30,30)
 	end)
+	
 	return btn
 end
 
-local saveButton = createButton("💾 Guardar Posición",50,Color3.fromRGB(255,0,0),Color3.fromRGB(0,255,0))
-local teleportButton = createButton("⚡ Teletransportar",110,Color3.fromRGB(0,0,255),Color3.fromRGB(255,0,255))
+local saveButton = createButton("💾 Guardar Posición",50)
+local teleportButton = createButton("⚡ Teletransportar",110)
 
 -- =========================
--- BOTÓN PARA ARRASTRAR FRAME
+-- ARRASTRAR FRAME
 -- =========================
 local dragButton = Instance.new("TextButton")
 dragButton.Size = UDim2.new(1,0,0,30)
@@ -228,13 +145,13 @@ dragButton.BorderSizePixel = 0
 dragButton.Text = ""
 dragButton.Parent = frame
 
-dragging, dragInput, dragStart, startPos = false, nil, nil, nil
+local dragging, dragInput, dragStart, startPos = false, nil, nil, nil
 local function updateFrame(input)
 	local delta = input.Position - dragStart
 	frame.Position = UDim2.new(startPos.X.Scale,startPos.X.Offset+delta.X,startPos.Y.Scale,startPos.Y.Offset+delta.Y)
 end
 dragButton.InputBegan:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+	if input.UserInputType == Enum.UserInputType.MouseButton1 then
 		dragging = true
 		dragStart = input.Position
 		startPos = frame.Position
@@ -246,7 +163,7 @@ dragButton.InputBegan:Connect(function(input)
 	end
 end)
 dragButton.InputChanged:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+	if input.UserInputType == Enum.UserInputType.MouseMovement then
 		dragInput = input
 	end
 end)
