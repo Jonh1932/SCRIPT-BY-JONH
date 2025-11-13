@@ -1,12 +1,15 @@
--- 🌈 JOHN SCRIPT COMPLETO FUNCIONAL
+-- 🌈 JOHN SCRIPT FINAL COMPLETO Y 100% FUNCIONAL
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
 local player = Players.LocalPlayer
 local PlayerGui = player:WaitForChild("PlayerGui")
 
--- === CREAR GUI PRINCIPAL ===
+-----------------------------------------------------
+-- GUI PRINCIPAL
+-----------------------------------------------------
 local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "JohnScriptUI"
+screenGui.ResetOnSpawn = false
 screenGui.Parent = PlayerGui
 
 local frame = Instance.new("Frame")
@@ -20,13 +23,15 @@ local corner = Instance.new("UICorner")
 corner.CornerRadius = UDim.new(0, 12)
 corner.Parent = frame
 
--- === BARRA SUPERIOR (TITULO Y ARRASTRE) ===
+-----------------------------------------------------
+-- BARRA SUPERIOR (ARRASTRE + TITULO)
+-----------------------------------------------------
 local titleBar = Instance.new("TextLabel")
-titleBar.Size = UDim2.new(1, 0, 0, 30)
+titleBar.Size = UDim2.new(1, -35, 0, 30)
 titleBar.Position = UDim2.new(0, 0, 0, 0)
-titleBar.BackgroundColor3 = Color3.fromRGB(35,35,35)
+titleBar.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
 titleBar.Text = "🌈 JohnScript"
-titleBar.TextColor3 = Color3.fromRGB(255,255,255)
+titleBar.TextColor3 = Color3.fromRGB(255, 255, 255)
 titleBar.Font = Enum.Font.GothamBold
 titleBar.TextScaled = true
 titleBar.Parent = frame
@@ -35,168 +40,194 @@ local titleCorner = Instance.new("UICorner")
 titleCorner.CornerRadius = UDim.new(0, 12)
 titleCorner.Parent = titleBar
 
--- === BOTÓN MINIMIZAR ===
+-----------------------------------------------------
+-- BOTÓN MINIMIZAR
+-----------------------------------------------------
 local minButton = Instance.new("TextButton")
-minButton.Size = UDim2.new(0, 30, 0, 30)
+minButton.Size = UDim2.new(0, 35, 0, 30)
 minButton.Position = UDim2.new(1, -35, 0, 0)
 minButton.Text = "–"
 minButton.Font = Enum.Font.GothamBold
 minButton.TextScaled = true
-minButton.TextColor3 = Color3.fromRGB(255,255,255)
-minButton.BackgroundColor3 = Color3.fromRGB(50,50,50)
+minButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+minButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
 minButton.BorderSizePixel = 0
-minButton.Parent = titleBar
+minButton.Parent = frame
 
 local minCorner = Instance.new("UICorner")
-minCorner.CornerRadius = UDim.new(0,6)
+minCorner.CornerRadius = UDim.new(0, 8)
 minCorner.Parent = minButton
 
 local minimized = false
-minButton.MouseButton1Click:Connect(function()
-	minimized = not minimized
-	for _,v in pairs(frame:GetChildren()) do
-		if v:IsA("TextButton") then
-			v.Visible = not minimized
-		end
-	end
-end)
 
--- === BOTONES RAINBOW ===
-local function createButton(text,posY)
-	local btn = Instance.new("TextButton")
-	btn.Size = UDim2.new(0,220,0,45)
-	btn.Position = UDim2.new(0.5,-110,0,posY)
-	btn.Text = text
-	btn.Font = Enum.Font.Gotham
-	btn.TextScaled = true
-	btn.TextColor3 = Color3.fromRGB(255,255,255)
-	btn.BackgroundColor3 = Color3.fromRGB(30,30,30)
-	btn.BorderSizePixel = 0
-	btn.Parent = frame
+-----------------------------------------------------
+-- FUNCIÓN CREAR BOTONES RAINBOW
+-----------------------------------------------------
+local function createButton(text, posY)
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(0, 220, 0, 45)
+    btn.Position = UDim2.new(0.5, -110, 0, posY)
+    btn.Text = text
+    btn.Font = Enum.Font.Gotham
+    btn.TextScaled = true
+    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    btn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    btn.BorderSizePixel = 0
+    btn.Parent = frame
 
-	local corner = Instance.new("UICorner")
-	corner.CornerRadius = UDim.new(0,8)
-	corner.Parent = btn
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 8)
+    corner.Parent = btn
 
-	local grad = Instance.new("UIGradient")
-	grad.Color = ColorSequence.new({
-		ColorSequenceKeypoint.new(0,Color3.fromRGB(255,0,0)),
-		ColorSequenceKeypoint.new(0.16,Color3.fromRGB(255,127,0)),
-		ColorSequenceKeypoint.new(0.33,Color3.fromRGB(255,255,0)),
-		ColorSequenceKeypoint.new(0.5,Color3.fromRGB(0,255,0)),
-		ColorSequenceKeypoint.new(0.66,Color3.fromRGB(0,0,255)),
-		ColorSequenceKeypoint.new(0.83,Color3.fromRGB(75,0,130)),
-		ColorSequenceKeypoint.new(1,Color3.fromRGB(148,0,211))
-	})
-	grad.Rotation = 90
-	grad.Parent = btn
+    local grad = Instance.new("UIGradient")
+    grad.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 0, 0)),
+        ColorSequenceKeypoint.new(0.15, Color3.fromRGB(255, 128, 0)),
+        ColorSequenceKeypoint.new(0.33, Color3.fromRGB(255, 255, 0)),
+        ColorSequenceKeypoint.new(0.50, Color3.fromRGB(0, 255, 0)),
+        ColorSequenceKeypoint.new(0.66, Color3.fromRGB(0, 0, 255)),
+        ColorSequenceKeypoint.new(0.83, Color3.fromRGB(75, 0, 130)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(148, 0, 211)),
+    })
+    grad.Rotation = 0
+    grad.Parent = btn
 
-	task.spawn(function()
-		while true do
-			for r=0,360 do
-				grad.Rotation = r
-				task.wait(0.02)
-			end
-		end
-	end)
+    task.spawn(function()
+        while true do
+            for rot = 0, 360 do
+                grad.Rotation = rot
+                task.wait(0.02)
+            end
+        end
+    end)
 
-	btn.MouseEnter:Connect(function()
-		btn.BackgroundColor3 = Color3.fromRGB(50,50,50)
-	end)
-	btn.MouseLeave:Connect(function()
-		btn.BackgroundColor3 = Color3.fromRGB(30,30,30)
-	end)
+    btn.MouseEnter:Connect(function()
+        btn.BackgroundColor3 = Color3.fromRGB(55, 55, 55)
+    end)
 
-	return btn
+    btn.MouseLeave:Connect(function()
+        btn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    end)
+
+    return btn
 end
 
-local saveButton = createButton("💾 Guardar Posición",50)
-local teleportButton = createButton("⚡ Teletransportar",110)
+-----------------------------------------------------
+-- BOTONES
+-----------------------------------------------------
+local saveButton = createButton("💾 Guardar Posición", 50)
+local teleportButton = createButton("⚡ Teletransportar", 110)
 
--- === ARRASTRAR FRAME ===
-local dragging, dragInput, dragStart, startPos = false, nil, nil, nil
+-----------------------------------------------------
+-- SISTEMA DE MINIMIZAR
+-----------------------------------------------------
+minButton.MouseButton1Click:Connect(function()
+    minimized = not minimized
+    for _, obj in ipairs(frame:GetChildren()) do
+        if obj ~= minButton and obj ~= titleBar and obj:IsA("TextButton") then
+            obj.Visible = not minimized
+        end
+    end
 
-titleBar.InputBegan:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseButton1 then
-		dragging = true
-		dragStart = input.Position
-		startPos = frame.Position
-		input.Changed:Connect(function()
-			if input.UserInputState == Enum.UserInputState.End then
-				dragging = false
-			end
-		end)
-	end
+    frame.Size = minimized and UDim2.new(0, 260, 0, 30) or UDim2.new(0, 260, 0, 220)
 end)
 
-titleBar.InputChanged:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseMovement then
-		dragInput = input
-	end
+-----------------------------------------------------
+-- ARRASTRAR GUI
+-----------------------------------------------------
+local dragging = false
+local dragStart
+local startPos
+
+titleBar.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = true
+        dragStart = input.Position
+        startPos = frame.Position
+    end
+end)
+
+titleBar.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = false
+    end
 end)
 
 UserInputService.InputChanged:Connect(function(input)
-	if input == dragInput and dragging then
-		local delta = input.Position - dragStart
-		frame.Position = UDim2.new(startPos.X.Scale,startPos.X.Offset+delta.X,startPos.Y.Scale,startPos.Y.Offset+delta.Y)
-	end
+    if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+        local delta = input.Position - dragStart
+        frame.Position = UDim2.new(
+            startPos.X.Scale,
+            startPos.X.Offset + delta.X,
+            startPos.Y.Scale,
+            startPos.Y.Offset + delta.Y
+        )
+    end
 end)
 
--- === FUNCIONES ORIGINALES ===
+-----------------------------------------------------
+-- FUNCIONES ORIGINALES
+-----------------------------------------------------
+local savedPosition = nil
+
 local function savePosition()
-	local character = player.Character or player.CharacterAdded:Wait()
-	local position = character:GetPrimaryPartCFrame().Position
-	return position
+    local character = player.Character or player.CharacterAdded:Wait()
+    local pos = character:GetPrimaryPartCFrame().Position
+    return pos
 end
 
-local function teleportToPosition(targetPosition)
-	local character = player.Character or player.CharacterAdded:Wait()
-	local humanoid = character:WaitForChild("Humanoid")
-	local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+local function teleportToPosition(targetPos)
+    local character = player.Character or player.CharacterAdded:Wait()
+    local humanoid = character:WaitForChild("Humanoid")
+    local root = character:WaitForChild("HumanoidRootPart")
 
-	local gravity = humanoidRootPart.AssemblyLinearVelocity
-	humanoidRootPart.AssemblyLinearVelocity = Vector3.new(0,0,0)
-	humanoidRootPart.CFrame = CFrame.new(targetPosition)
+    local vel = root.AssemblyLinearVelocity
+    root.AssemblyLinearVelocity = Vector3.zero
 
-	humanoid.PlatformStand = true
-	wait(0.1)
-	humanoid.PlatformStand = false
+    root.CFrame = CFrame.new(targetPos)
 
-	humanoid.PlatformStand = true
-	wait(0.5)
-	humanoid.PlatformStand = false
+    humanoid.PlatformStand = true
+    task.wait(0.4)
+    humanoid.PlatformStand = false
 
-	humanoidRootPart.AssemblyLinearVelocity = gravity
+    root.AssemblyLinearVelocity = vel
 end
 
-local savedPosition
-
+-----------------------------------------------------
+-- BOTÓN GUARDAR
+-----------------------------------------------------
 saveButton.MouseButton1Click:Connect(function()
-	savedPosition = savePosition()
-	print("Posición guardada:", savedPosition)
+    savedPosition = savePosition()
+    print("📌 Posición guardada:", savedPosition)
 end)
 
+-----------------------------------------------------
+-- BOTÓN TELEPORTAR
+-----------------------------------------------------
 teleportButton.MouseButton1Click:Connect(function()
-	if savedPosition then
-		teleportToPosition(savedPosition)
-		print("Teletransportado a la posición guardada y puesto en ragdoll")
-	else
-		print("Primero guarda una posición")
-	end
+    if savedPosition then
+        teleportToPosition(savedPosition)
+        print("⚡ Teletransportado a la posición guardada")
+    else
+        print("❗ Primero guarda una posición")
+    end
 end)
 
-local function preventRespawn()
-	local character = player.Character or player.CharacterAdded:Wait()
-	local humanoid = character:WaitForChild("Humanoid")
-
-	humanoid.Died:Connect(function()
-		wait(0.1)
-		local newCharacter = player.Character or player.CharacterAdded:Wait()
-		local newHumanoid = newCharacter:WaitForChild("Humanoid")
-		newHumanoid.PlatformStand = true
-		wait(0.5)
-		newHumanoid.PlatformStand = false
-	end)
+-----------------------------------------------------
+-- EVITAR RIGIDEZ AL MORIR
+-----------------------------------------------------
+local function preventRespawnRagdoll()
+    player.CharacterAdded:Connect(function(char)
+        local hum = char:WaitForChild("Humanoid")
+        hum.Died:Connect(function()
+            task.wait(0.1)
+            local newChar = player.Character or player.CharacterAdded:Wait()
+            local newHum = newChar:WaitForChild("Humanoid")
+            newHum.PlatformStand = true
+            task.wait(0.4)
+            newHum.PlatformStand = false
+        end)
+    end)
 end
 
-preventRespawn()
+preventRespawnRagdoll()
