@@ -1,5 +1,5 @@
--- 🌈 JOHN SCRIPT COMPLETO Y FUNCIONAL
--- Roblox GUI moderna con botones rainbow, minimizable y botón flotante movible
+-- 🌈 JOHN SCRIPT MODERNO SIN BOTÓN FLOTANTE
+-- Roblox GUI con botones rainbow y minimizable
 
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
@@ -7,32 +7,11 @@ local player = Players.LocalPlayer
 local PlayerGui = player:WaitForChild("PlayerGui")
 
 -- =========================
--- BOTÓN REDONDO FLOTANTE (MOVIBLE)
--- =========================
-local toggleButton = Instance.new("TextButton")
-toggleButton.Size = UDim2.new(0,50,0,50)
-toggleButton.Position = UDim2.new(0.9,0,0.8,0)
-toggleButton.AnchorPoint = Vector2.new(0.5,0.5)
-toggleButton.Text = "⚙️"
-toggleButton.Font = Enum.Font.GothamBold
-toggleButton.TextScaled = true
-toggleButton.TextColor3 = Color3.fromRGB(255,255,255)
-toggleButton.BackgroundColor3 = Color3.fromRGB(30,30,30)
-toggleButton.BorderSizePixel = 0
-toggleButton.ZIndex = 5
-toggleButton.Parent = PlayerGui
-
-local tbCorner = Instance.new("UICorner")
-tbCorner.CornerRadius = UDim.new(0,25)
-tbCorner.Parent = toggleButton
-
--- =========================
 -- CREAR GUI PRINCIPAL
 -- =========================
 local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "JohnScriptUI"
 screenGui.Parent = PlayerGui
-screenGui.Enabled = false -- empieza cerrado
 
 local frame = Instance.new("Frame")
 frame.Size = UDim2.new(0,260,0,220)
@@ -82,7 +61,7 @@ minButton.MouseButton1Click:Connect(function()
 end)
 
 -- =========================
--- BOTONES PRINCIPALES (RAINBOW)
+-- CREAR BOTONES RAINBOW
 -- =========================
 local function createButton(text,posY)
 	local btn = Instance.new("TextButton")
@@ -174,15 +153,8 @@ UserInputService.InputChanged:Connect(function(input)
 end)
 
 -- =========================
--- TOGGLE ABRIR/CERRAR GUI
--- =========================
-toggleButton.MouseButton1Click:Connect(function()
-	screenGui.Enabled = not screenGui.Enabled
-end)
-
--- ==========================================
--- FUNCIONES ORIGINALES (NO TOCADAS)
--- ==========================================
+-- FUNCIONES ORIGINALES
+-- ==========================
 local function savePosition()
 	local character = player.Character or player.CharacterAdded:Wait()
 	local position = character:GetPrimaryPartCFrame().Position
