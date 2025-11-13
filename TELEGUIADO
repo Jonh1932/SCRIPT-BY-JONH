@@ -1,51 +1,52 @@
--- 🌈 JOHN SCRIPT MODERNO SIN BOTÓN FLOTANTE
--- Roblox GUI con botones rainbow y minimizable
-
+-- 🌈 JOHN SCRIPT COMPLETO FUNCIONAL
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
 local player = Players.LocalPlayer
 local PlayerGui = player:WaitForChild("PlayerGui")
 
--- =========================
--- CREAR GUI PRINCIPAL
--- =========================
+-- === CREAR GUI PRINCIPAL ===
 local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "JohnScriptUI"
 screenGui.Parent = PlayerGui
 
 local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0,260,0,220)
-frame.Position = UDim2.new(0.5,-130,0.5,-110)
-frame.BackgroundColor3 = Color3.fromRGB(25,25,25)
+frame.Size = UDim2.new(0, 260, 0, 220)
+frame.Position = UDim2.new(0.5, -130, 0.5, -110)
+frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
 frame.BorderSizePixel = 0
 frame.Parent = screenGui
 
 local corner = Instance.new("UICorner")
-corner.CornerRadius = UDim.new(0,12)
+corner.CornerRadius = UDim.new(0, 12)
 corner.Parent = frame
 
--- Título
-local title = Instance.new("TextLabel")
-title.Size = UDim2.new(1,0,0,30)
-title.Position = UDim2.new(0,0,0,0)
-title.BackgroundTransparency = 1
-title.Text = "🌈 JohnScript"
-title.Font = Enum.Font.GothamBold
-title.TextScaled = true
-title.TextColor3 = Color3.fromRGB(255,255,255)
-title.Parent = frame
+-- === BARRA SUPERIOR (TITULO Y ARRASTRE) ===
+local titleBar = Instance.new("TextLabel")
+titleBar.Size = UDim2.new(1, 0, 0, 30)
+titleBar.Position = UDim2.new(0, 0, 0, 0)
+titleBar.BackgroundColor3 = Color3.fromRGB(35,35,35)
+titleBar.Text = "🌈 JohnScript"
+titleBar.TextColor3 = Color3.fromRGB(255,255,255)
+titleBar.Font = Enum.Font.GothamBold
+titleBar.TextScaled = true
+titleBar.Parent = frame
 
--- Botón minimizar
+local titleCorner = Instance.new("UICorner")
+titleCorner.CornerRadius = UDim.new(0, 12)
+titleCorner.Parent = titleBar
+
+-- === BOTÓN MINIMIZAR ===
 local minButton = Instance.new("TextButton")
-minButton.Size = UDim2.new(0,30,0,30)
-minButton.Position = UDim2.new(1,-35,0,2)
+minButton.Size = UDim2.new(0, 30, 0, 30)
+minButton.Position = UDim2.new(1, -35, 0, 0)
 minButton.Text = "–"
 minButton.Font = Enum.Font.GothamBold
 minButton.TextScaled = true
 minButton.TextColor3 = Color3.fromRGB(255,255,255)
 minButton.BackgroundColor3 = Color3.fromRGB(50,50,50)
 minButton.BorderSizePixel = 0
-minButton.Parent = frame
+minButton.Parent = titleBar
+
 local minCorner = Instance.new("UICorner")
 minCorner.CornerRadius = UDim.new(0,6)
 minCorner.Parent = minButton
@@ -54,15 +55,13 @@ local minimized = false
 minButton.MouseButton1Click:Connect(function()
 	minimized = not minimized
 	for _,v in pairs(frame:GetChildren()) do
-		if v:IsA("TextButton") and v ~= minButton then
+		if v:IsA("TextButton") then
 			v.Visible = not minimized
 		end
 	end
 end)
 
--- =========================
--- CREAR BOTONES RAINBOW
--- =========================
+-- === BOTONES RAINBOW ===
 local function createButton(text,posY)
 	local btn = Instance.new("TextButton")
 	btn.Size = UDim2.new(0,220,0,45)
@@ -74,11 +73,11 @@ local function createButton(text,posY)
 	btn.BackgroundColor3 = Color3.fromRGB(30,30,30)
 	btn.BorderSizePixel = 0
 	btn.Parent = frame
-	
+
 	local corner = Instance.new("UICorner")
 	corner.CornerRadius = UDim.new(0,8)
 	corner.Parent = btn
-	
+
 	local grad = Instance.new("UIGradient")
 	grad.Color = ColorSequence.new({
 		ColorSequenceKeypoint.new(0,Color3.fromRGB(255,0,0)),
@@ -91,7 +90,7 @@ local function createButton(text,posY)
 	})
 	grad.Rotation = 90
 	grad.Parent = btn
-	
+
 	task.spawn(function()
 		while true do
 			for r=0,360 do
@@ -100,36 +99,24 @@ local function createButton(text,posY)
 			end
 		end
 	end)
-	
+
 	btn.MouseEnter:Connect(function()
 		btn.BackgroundColor3 = Color3.fromRGB(50,50,50)
 	end)
 	btn.MouseLeave:Connect(function()
 		btn.BackgroundColor3 = Color3.fromRGB(30,30,30)
 	end)
-	
+
 	return btn
 end
 
 local saveButton = createButton("💾 Guardar Posición",50)
 local teleportButton = createButton("⚡ Teletransportar",110)
 
--- =========================
--- ARRASTRAR FRAME
--- =========================
-local dragButton = Instance.new("TextButton")
-dragButton.Size = UDim2.new(1,0,0,30)
-dragButton.BackgroundTransparency = 1
-dragButton.BorderSizePixel = 0
-dragButton.Text = ""
-dragButton.Parent = frame
-
+-- === ARRASTRAR FRAME ===
 local dragging, dragInput, dragStart, startPos = false, nil, nil, nil
-local function updateFrame(input)
-	local delta = input.Position - dragStart
-	frame.Position = UDim2.new(startPos.X.Scale,startPos.X.Offset+delta.X,startPos.Y.Scale,startPos.Y.Offset+delta.Y)
-end
-dragButton.InputBegan:Connect(function(input)
+
+titleBar.InputBegan:Connect(function(input)
 	if input.UserInputType == Enum.UserInputType.MouseButton1 then
 		dragging = true
 		dragStart = input.Position
@@ -141,20 +128,21 @@ dragButton.InputBegan:Connect(function(input)
 		end)
 	end
 end)
-dragButton.InputChanged:Connect(function(input)
+
+titleBar.InputChanged:Connect(function(input)
 	if input.UserInputType == Enum.UserInputType.MouseMovement then
 		dragInput = input
 	end
 end)
+
 UserInputService.InputChanged:Connect(function(input)
 	if input == dragInput and dragging then
-		updateFrame(input)
+		local delta = input.Position - dragStart
+		frame.Position = UDim2.new(startPos.X.Scale,startPos.X.Offset+delta.X,startPos.Y.Scale,startPos.Y.Offset+delta.Y)
 	end
 end)
 
--- =========================
--- FUNCIONES ORIGINALES
--- ==========================
+-- === FUNCIONES ORIGINALES ===
 local function savePosition()
 	local character = player.Character or player.CharacterAdded:Wait()
 	local position = character:GetPrimaryPartCFrame().Position
