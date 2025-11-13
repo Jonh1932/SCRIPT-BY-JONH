@@ -1,154 +1,218 @@
--- Script para crear una interfaz gráfica movible en Roblox
+-- 🌈 JOHN SCRIPT - GUI MODERNA (con gradiente rainbow animado)
+-- Código base: tu script original, solo rediseñada la interfaz.
 
 -- Crear un ScreenGui
 local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "JohnScriptUI"
 screenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
 
--- Crear un Frame para contener los botones
+-- Crear un Frame principal con estilo moderno
 local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0, 200, 0, 150)
-frame.Position = UDim2.new(0.5, -100, 0.5, -75)
-frame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-frame.BorderSizePixel = 1
+frame.Size = UDim2.new(0, 260, 0, 210)
+frame.Position = UDim2.new(0.5, -130, 0.5, -105)
+frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+frame.BorderSizePixel = 0
 frame.Parent = screenGui
 
--- Crear un TextButton para guardar la posición
+-- Bordes redondeados
+local corner = Instance.new("UICorner")
+corner.CornerRadius = UDim.new(0, 12)
+corner.Parent = frame
+
+-- Sombra suave
+local shadow = Instance.new("ImageLabel")
+shadow.Name = "Shadow"
+shadow.AnchorPoint = Vector2.new(0.5, 0.5)
+shadow.Position = UDim2.new(0.5, 0, 0.5, 4)
+shadow.Size = UDim2.new(1, 30, 1, 30)
+shadow.ZIndex = -1
+shadow.BackgroundTransparency = 1
+shadow.Image = "rbxassetid://1316045217"
+shadow.ImageTransparency = 0.45
+shadow.Parent = frame
+
+-- Título "JohnScript"
+local title = Instance.new("TextLabel")
+title.Size = UDim2.new(1, 0, 0, 30)
+title.Position = UDim2.new(0, 0, 0, 0)
+title.BackgroundTransparency = 1
+title.Text = "🌈 JohnScript"
+title.Font = Enum.Font.GothamBold
+title.TextScaled = true
+title.TextColor3 = Color3.fromRGB(255, 255, 255)
+title.Parent = frame
+
+-- Gradiente tipo rainbow
+local gradient = Instance.new("UIGradient")
+gradient.Color = ColorSequence.new({
+	ColorSequenceKeypoint.new(0.00, Color3.fromRGB(255, 0, 0)),
+	ColorSequenceKeypoint.new(0.16, Color3.fromRGB(255, 127, 0)),
+	ColorSequenceKeypoint.new(0.33, Color3.fromRGB(255, 255, 0)),
+	ColorSequenceKeypoint.new(0.50, Color3.fromRGB(0, 255, 0)),
+	ColorSequenceKeypoint.new(0.66, Color3.fromRGB(0, 0, 255)),
+	ColorSequenceKeypoint.new(0.83, Color3.fromRGB(75, 0, 130)),
+	ColorSequenceKeypoint.new(1.00, Color3.fromRGB(148, 0, 211)),
+})
+gradient.Rotation = 0
+gradient.Parent = frame
+
+-- Animar gradiente
+task.spawn(function()
+	while true do
+		for i = 0, 360 do
+			gradient.Rotation = i
+			task.wait(0.03)
+		end
+	end
+end)
+
+-- Crear botón "Guardar Posición"
 local saveButton = Instance.new("TextButton")
-saveButton.Size = UDim2.new(0, 180, 0, 40)
-saveButton.Position = UDim2.new(0.5, -90, 0, 10)
-saveButton.Text = "Guardar Posición"
-saveButton.BackgroundColor3 = Color3.fromRGB(0, 128, 0)
+saveButton.Size = UDim2.new(0, 220, 0, 45)
+saveButton.Position = UDim2.new(0.5, -110, 0, 45)
+saveButton.Text = "💾 Guardar Posición"
+saveButton.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
 saveButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+saveButton.Font = Enum.Font.Gotham
+saveButton.TextScaled = true
 saveButton.Parent = frame
 
--- Crear un TextButton para teletransportarse a la posición guardada
+local saveCorner = Instance.new("UICorner")
+saveCorner.CornerRadius = UDim.new(0, 8)
+saveCorner.Parent = saveButton
+
+-- Hover efecto
+saveButton.MouseEnter:Connect(function()
+	saveButton.BackgroundColor3 = Color3.fromRGB(0, 200, 255)
+end)
+saveButton.MouseLeave:Connect(function()
+	saveButton.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
+end)
+
+-- Crear botón "Teletransportar"
 local teleportButton = Instance.new("TextButton")
-teleportButton.Size = UDim2.new(0, 180, 0, 40)
-teleportButton.Position = UDim2.new(0.5, -90, 0, 60)
-teleportButton.Text = "Teletransportar"
-teleportButton.BackgroundColor3 = Color3.fromRGB(0, 0, 128)
+teleportButton.Size = UDim2.new(0, 220, 0, 45)
+teleportButton.Position = UDim2.new(0.5, -110, 0, 100)
+teleportButton.Text = "⚡ Teletransportar"
+teleportButton.BackgroundColor3 = Color3.fromRGB(255, 90, 90)
 teleportButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+teleportButton.Font = Enum.Font.Gotham
+teleportButton.TextScaled = true
 teleportButton.Parent = frame
 
--- Crear un TextButton transparente para arrastrar el frame
+local teleportCorner = Instance.new("UICorner")
+teleportCorner.CornerRadius = UDim.new(0, 8)
+teleportCorner.Parent = teleportButton
+
+teleportButton.MouseEnter:Connect(function()
+	teleportButton.BackgroundColor3 = Color3.fromRGB(255, 120, 120)
+end)
+teleportButton.MouseLeave:Connect(function()
+	teleportButton.BackgroundColor3 = Color3.fromRGB(255, 90, 90)
+end)
+
+-- Botón invisible para arrastrar el frame
 local dragButton = Instance.new("TextButton")
 dragButton.Size = UDim2.new(1, 0, 0, 30)
-dragButton.Position = UDim2.new(0, 0, 0, 0)
-dragButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 dragButton.BackgroundTransparency = 1
 dragButton.BorderSizePixel = 0
 dragButton.Text = ""
 dragButton.Parent = frame
 
--- Variable para almacenar la posición inicial del mouse
-local dragging
-local dragInput
-local dragStart
-local startPos
+-- Variables para arrastre
+local dragging, dragInput, dragStart, startPos
 
--- Función para iniciar el arrastre
 local function update(input)
-    local delta = input.Position - dragStart
-    frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+	local delta = input.Position - dragStart
+	frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
 end
 
--- Conectar los eventos de arrastre
 dragButton.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-        dragging = true
-        dragStart = input.Position
-        startPos = frame.Position
-
-        input.Changed:Connect(function()
-            if input.UserInputState == Enum.UserInputState.End then
-                dragging = false
-            end
-        end)
-    end
+	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+		dragging = true
+		dragStart = input.Position
+		startPos = frame.Position
+		input.Changed:Connect(function()
+			if input.UserInputState == Enum.UserInputState.End then
+				dragging = false
+			end
+		end)
+	end
 end)
 
 dragButton.InputChanged:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
-        dragInput = input
-    end
+	if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+		dragInput = input
+	end
 end)
 
 game:GetService("UserInputService").InputChanged:Connect(function(input)
-    if input == dragInput and dragging then
-        update(input)
-    end
+	if input == dragInput and dragging then
+		update(input)
+	end
 end)
 
--- Función para guardar la posición
+-- ==========================================
+-- FUNCIONES ORIGINALES (NO TOCADAS)
+-- ==========================================
+
 local function savePosition()
-    local player = game.Players.LocalPlayer
-    local character = player.Character or player.CharacterAdded:Wait()
-    local position = character:GetPrimaryPartCFrame().Position
-    return position
+	local player = game.Players.LocalPlayer
+	local character = player.Character or player.CharacterAdded:Wait()
+	local position = character:GetPrimaryPartCFrame().Position
+	return position
 end
 
--- Función para teletransportarse a una posición específica y poner al jugador en ragdoll
 local function teleportToPosition(targetPosition)
-    local player = game.Players.LocalPlayer
-    local character = player.Character or player.CharacterAdded:Wait()
-    local humanoid = character:WaitForChild("Humanoid")
-    local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+	local player = game.Players.LocalPlayer
+	local character = player.Character or player.CharacterAdded:Wait()
+	local humanoid = character:WaitForChild("Humanoid")
+	local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
 
-    -- Desactivar la gravedad temporalmente para evitar problemas
-    local gravity = humanoidRootPart.AssemblyLinearVelocity
-    humanoidRootPart.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
+	local gravity = humanoidRootPart.AssemblyLinearVelocity
+	humanoidRootPart.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
+	humanoidRootPart.CFrame = CFrame.new(targetPosition)
 
-    -- Teletransportar al jugador
-    humanoidRootPart.CFrame = CFrame.new(targetPosition)
+	humanoid.PlatformStand = true
+	wait(0.1)
+	humanoid.PlatformStand = false
 
-    -- Deshabilitar el Humanoid para poner al jugador en ragdoll
-    humanoid.PlatformStand = true
-    wait(0.1) -- Esperar un momento para asegurar el teletransporte
-    humanoid.PlatformStand = false
+	humanoid.PlatformStand = true
+	wait(0.5)
+	humanoid.PlatformStand = false
 
-    -- Desactivar el Humanoid para simular una caída
-    humanoid.PlatformStand = true
-    wait(0.5) -- Esperar un momento para que la caída se complete
-    humanoid.PlatformStand = false
-
-    -- Restaurar la gravedad
-    humanoidRootPart.AssemblyLinearVelocity = gravity
+	humanoidRootPart.AssemblyLinearVelocity = gravity
 end
 
--- Variable para almacenar la posición guardada
 local savedPosition
 
--- Conectar los botones a las funciones
 saveButton.MouseButton1Click:Connect(function()
-    savedPosition = savePosition()
-    print("Posición guardada:", savedPosition)
+	savedPosition = savePosition()
+	print("Posición guardada:", savedPosition)
 end)
 
 teleportButton.MouseButton1Click:Connect(function()
-    if savedPosition then
-        teleportToPosition(savedPosition)
-        print("Teletransportado a la posición guardada y puesto en ragdoll")
-    else
-        print("Primero guarda una posición")
-    end
+	if savedPosition then
+		teleportToPosition(savedPosition)
+		print("Teletransportado a la posición guardada y puesto en ragdoll")
+	else
+		print("Primero guarda una posición")
+	end
 end)
 
--- Función para evitar que el servidor devuelva al jugador
 local function preventRespawn()
-    local player = game.Players.LocalPlayer
-    local character = player.Character or player.CharacterAdded:Wait()
-    local humanoid = character:WaitForChild("Humanoid")
+	local player = game.Players.LocalPlayer
+	local character = player.Character or player.CharacterAdded:Wait()
+	local humanoid = character:WaitForChild("Humanoid")
 
-    -- Conectar a la función de respawn del Humanoid
-    humanoid.Died:Connect(function()
-        wait(0.1) -- Esperar un momento para asegurar que el respawn se complete
-        local newCharacter = player.Character or player.CharacterAdded:Wait()
-        local newHumanoid = newCharacter:WaitForChild("Humanoid")
-        newHumanoid.PlatformStand = true
-        wait(0.5)
-        newHumanoid.PlatformStand = false
-    end)
+	humanoid.Died:Connect(function()
+		wait(0.1)
+		local newCharacter = player.Character or player.CharacterAdded:Wait()
+		local newHumanoid = newCharacter:WaitForChild("Humanoid")
+		newHumanoid.PlatformStand = true
+		wait(0.5)
+		newHumanoid.PlatformStand = false
+	end)
 end
 
--- Llamar a la función para evitar respawn
 preventRespawn()
