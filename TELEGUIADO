@@ -1,4 +1,4 @@
--- 🌈 JOHN SCRIPT FINAL COMPLETO Y 100% FUNCIONAL
+-- 🌈 JOHN SCRIPT FINAL COMPLETO Y 100% FUNCIONAL + MOVER DESDE CUALQUIER PARTE
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
 local player = Players.LocalPlayer
@@ -17,6 +17,8 @@ frame.Size = UDim2.new(0, 260, 0, 220)
 frame.Position = UDim2.new(0.5, -130, 0.5, -110)
 frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
 frame.BorderSizePixel = 0
+frame.Active = true   -- 🔥 NECESARIO PARA ARRASTRAR
+frame.Draggable = true -- 🔥 HACE QUE TODO EL FRAME SEA ARRASTRABLE
 frame.Parent = screenGui
 
 local corner = Instance.new("UICorner")
@@ -24,7 +26,7 @@ corner.CornerRadius = UDim.new(0, 12)
 corner.Parent = frame
 
 -----------------------------------------------------
--- BARRA SUPERIOR (ARRASTRE + TITULO)
+-- BARRA SUPERIOR (TITULO)
 -----------------------------------------------------
 local titleBar = Instance.new("TextLabel")
 titleBar.Size = UDim2.new(1, -35, 0, 30)
@@ -130,39 +132,6 @@ minButton.MouseButton1Click:Connect(function()
     end
 
     frame.Size = minimized and UDim2.new(0, 260, 0, 30) or UDim2.new(0, 260, 0, 220)
-end)
-
------------------------------------------------------
--- ARRASTRAR GUI
------------------------------------------------------
-local dragging = false
-local dragStart
-local startPos
-
-titleBar.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        dragging = true
-        dragStart = input.Position
-        startPos = frame.Position
-    end
-end)
-
-titleBar.InputEnded:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        dragging = false
-    end
-end)
-
-UserInputService.InputChanged:Connect(function(input)
-    if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-        local delta = input.Position - dragStart
-        frame.Position = UDim2.new(
-            startPos.X.Scale,
-            startPos.X.Offset + delta.X,
-            startPos.Y.Scale,
-            startPos.Y.Offset + delta.Y
-        )
-    end
 end)
 
 -----------------------------------------------------
