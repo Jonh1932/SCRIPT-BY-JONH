@@ -464,7 +464,7 @@ UserInputService.InputBegan:Connect(function(input, gameProcessed)
     if gameProcessed then return end
     
     -- AIM (K)
-    if input.KeyCode == Enum.KeyCode.K then
+    if input.KeyCode == Enum.KeyCode.MouseButton2 then
         if aimEnabled then
             stopAim()
         else
@@ -482,7 +482,7 @@ UserInputService.InputBegan:Connect(function(input, gameProcessed)
     end
     
     -- Cambiar objetivo (F)
-    if input.KeyCode == Enum.KeyCode.MouseButton2 then
+    if input.KeyCode == Enum.KeyCode.F then
         if aimEnabled then
             switchTarget()
         end
