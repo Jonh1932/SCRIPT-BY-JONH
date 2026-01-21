@@ -1,0 +1,554 @@
+-- Sistema AIM MEJORADO con Team Check, Wall Check y Cambio de Objetivo
+-- Por DeepSeek - Versión Completa
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local Workspace = game:GetService("Workspace")
+
+local player = Players.LocalPlayer
+local mouse = player:GetMouse()
+local camera = Workspace.CurrentCamera
+
+-- Variables mejoradas
+local aimEnabled = false
+local ESPEnabled = false
+local currentTarget = nil
+local allTargets = {}
+local targetIndex = 1
+local teamCheck = true
+local wallCheck = true
+
+-- Crear GUI mejorada
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "AimProGUI"
+screenGui.ResetOnSpawn = false
+screenGui.Parent = player:WaitForChild("PlayerGui")
+
+-- Marco principal
+local mainFrame = Instance.new("Frame")
+mainFrame.Name = "MainFrame"
+mainFrame.Size = UDim2.new(0, 250, 0, 220) -- Más grande para nuevos controles
+mainFrame.Position = UDim2.new(0, 10, 0, 10)
+mainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
+mainFrame.BorderSizePixel = 0
+mainFrame.Active = true
+mainFrame.Draggable = true
+mainFrame.Parent = screenGui
+
+-- Título
+local title = Instance.new("TextLabel")
+title.Name = "Title"
+title.Size = UDim2.new(1, 0, 0, 30)
+title.Position = UDim2.new(0, 0, 0, 0)
+title.BackgroundColor3 = Color3.fromRGB(0, 100, 200)
+title.Text = "🎯 AIM PRO"
+title.TextColor3 = Color3.fromRGB(255, 255, 255)
+title.TextSize = 16
+title.Font = Enum.Font.GothamBold
+title.Parent = mainFrame
+
+-- Botón AIM
+local toggleButton = Instance.new("TextButton")
+toggleButton.Name = "ToggleButton"
+toggleButton.Size = UDim2.new(0.45, 0, 0, 35)
+toggleButton.Position = UDim2.new(0.03, 0, 0.15, 0)
+toggleButton.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+toggleButton.Text = "AIM: OFF"
+toggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+toggleButton.TextSize = 13
+toggleButton.Font = Enum.Font.GothamBold
+toggleButton.Parent = mainFrame
+
+-- Botón ESP
+local espButton = Instance.new("TextButton")
+espButton.Name = "ESPButton"
+espButton.Size = UDim2.new(0.45, 0, 0, 35)
+espButton.Position = UDim2.new(0.52, 0, 0.15, 0)
+espButton.BackgroundColor3 = Color3.fromRGB(100, 50, 200)
+espButton.Text = "ESP: OFF"
+espButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+espButton.TextSize = 13
+espButton.Font = Enum.Font.GothamBold
+espButton.Parent = mainFrame
+
+-- Botón Team Check
+local teamButton = Instance.new("TextButton")
+teamButton.Name = "TeamButton"
+teamButton.Size = UDim2.new(0.45, 0, 0, 30)
+teamButton.Position = UDim2.new(0.03, 0, 0.35, 0)
+teamButton.BackgroundColor3 = Color3.fromRGB(0, 150, 100)
+teamButton.Text = "TEAM: ON"
+teamButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+teamButton.TextSize = 12
+teamButton.Font = Enum.Font.GothamBold
+teamButton.Parent = mainFrame
+
+-- Botón Wall Check
+local wallButton = Instance.new("TextButton")
+wallButton.Name = "WallButton"
+wallButton.Size = UDim2.new(0.45, 0, 0, 30)
+wallButton.Position = UDim2.new(0.52, 0, 0.35, 0)
+wallButton.BackgroundColor3 = Color3.fromRGB(150, 100, 0)
+wallButton.Text = "WALL: ON"
+wallButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+wallButton.TextSize = 12
+wallButton.Font = Enum.Font.GothamBold
+wallButton.Parent = mainFrame
+
+-- Botón Cambiar Objetivo
+local switchButton = Instance.new("TextButton")
+switchButton.Name = "SwitchButton"
+switchButton.Size = UDim2.new(0.94, 0, 0, 35)
+switchButton.Position = UDim2.new(0.03, 0, 0.55, 0)
+switchButton.BackgroundColor3 = Color3.fromRGB(50, 100, 200)
+switchButton.Text = "CAMBIAR OBJETIVO (Q)"
+switchButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+switchButton.TextSize = 13
+switchButton.Font = Enum.Font.GothamBold
+switchButton.Parent = mainFrame
+
+-- Display del objetivo actual
+local targetDisplay = Instance.new("TextLabel")
+targetDisplay.Name = "TargetDisplay"
+targetDisplay.Size = UDim2.new(0.94, 0, 0, 40)
+targetDisplay.Position = UDim2.new(0.03, 0, 0.8, 0)
+targetDisplay.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
+targetDisplay.Text = "Objetivo: Ninguno"
+targetDisplay.TextColor3 = Color3.fromRGB(200, 200, 200)
+targetDisplay.TextSize = 13
+targetDisplay.Font = Enum.Font.Gotham
+targetDisplay.Parent = mainFrame
+
+-- ====== FUNCIONES MEJORADAS ======
+
+-- Verificar si son del mismo equipo
+function isSameTeam(player1, player2)
+    if not teamCheck then return false end
+    
+    -- Verificar si el juego tiene sistema de equipos
+    local teams = game:GetService("Teams"):GetTeams()
+    if #teams == 0 then return false end
+    
+    local team1 = player1.Team
+    local team2 = player2.Team
+    
+    if team1 and team2 then
+        return team1 == team2
+    end
+    
+    return false
+end
+
+-- Verificar si hay pared en medio
+function hasWallBetween(pos1, pos2)
+    if not wallCheck then return false end
+    
+    local direction = (pos2 - pos1).Unit
+    local distance = (pos2 - pos1).Magnitude
+    
+    local raycastParams = RaycastParams.new()
+    raycastParams.FilterType = Enum.RaycastFilterType.Blacklist
+    raycastParams.FilterDescendantsInstances = {player.Character}
+    raycastParams.IgnoreWater = true
+    
+    local raycastResult = Workspace:Raycast(pos1, direction * distance, raycastParams)
+    
+    if raycastResult then
+        local hit = raycastResult.Instance
+        -- Si golpea algo que no es un jugador, hay pared
+        local hitPlayer = Players:GetPlayerFromCharacter(hit:FindFirstAncestorOfClass("Model"))
+        return not hitPlayer
+    end
+    
+    return false
+end
+
+-- Obtener TODOS los objetivos válidos
+function getAllValidTargets()
+    local targets = {}
+    
+    if not player.Character then return targets end
+    local myHead = player.Character:FindFirstChild("Head")
+    if not myHead then return targets end
+    
+    for _, otherPlayer in pairs(Players:GetPlayers()) do
+        if otherPlayer ~= player and otherPlayer.Character then
+            local targetChar = otherPlayer.Character
+            local humanoid = targetChar:FindFirstChildOfClass("Humanoid")
+            local head = targetChar:FindFirstChild("Head")
+            
+            -- Verificaciones
+            if humanoid and humanoid.Health > 0 and head then
+                -- Team Check
+                if isSameTeam(player, otherPlayer) then
+                    continue
+                end
+                
+                -- Wall Check
+                if hasWallBetween(myHead.Position, head.Position) then
+                    continue
+                end
+                
+                -- Distancia
+                local distance = (myHead.Position - head.Position).Magnitude
+                if distance <= 1000 then
+                    table.insert(targets, {
+                        player = otherPlayer,
+                        distance = distance
+                    })
+                end
+            end
+        end
+    end
+    
+    -- Ordenar por distancia
+    table.sort(targets, function(a, b)
+        return a.distance < b.distance
+    end)
+    
+    return targets
+end
+
+-- Cambiar al siguiente objetivo
+function switchTarget()
+    allTargets = getAllValidTargets()
+    
+    if #allTargets == 0 then
+        currentTarget = nil
+        targetIndex = 1
+        targetDisplay.Text = "Objetivo: Ninguno"
+        return
+    end
+    
+    targetIndex = targetIndex + 1
+    if targetIndex > #allTargets then
+        targetIndex = 1
+    end
+    
+    currentTarget = allTargets[targetIndex].player
+    targetDisplay.Text = string.format("Objetivo: %s (%.0fm)", 
+        currentTarget.Name, 
+        allTargets[targetIndex].distance)
+end
+
+-- Sistema AIM mejorado
+local aimConnection
+function startAim()
+    if aimConnection then aimConnection:Disconnect() end
+    
+    -- Actualizar lista inicial
+    allTargets = getAllValidTargets()
+    if #allTargets > 0 then
+        targetIndex = 1
+        currentTarget = allTargets[1].player
+        targetDisplay.Text = string.format("Objetivo: %s (%.0fm)", 
+            currentTarget.Name, 
+            allTargets[1].distance)
+    end
+    
+    aimConnection = RunService.RenderStepped:Connect(function()
+        if not aimEnabled or not player.Character then return end
+        
+        -- Verificar si el objetivo actual sigue siendo válido
+        if currentTarget and currentTarget.Character then
+            local char = currentTarget.Character
+            local humanoid = char:FindFirstChildOfClass("Humanoid")
+            local head = char:FindFirstChild("Head")
+            
+            if humanoid and humanoid.Health > 0 and head then
+                -- Apuntar un poco más abajo (pecho/torso)
+                local aimPosition = head.Position
+                
+                -- Ajustar altura para apuntar más bajo
+                if char:FindFirstChild("Torso") then
+                    aimPosition = char.Torso.Position
+                elseif char:FindFirstChild("HumanoidRootPart") then
+                    aimPosition = char.HumanoidRootPart.Position
+                end
+                
+                -- Wall check para el objetivo actual
+                if not hasWallBetween(player.Character.Head.Position, aimPosition) then
+                    -- Aim suave
+                    local currentCF = camera.CFrame
+                    local targetCF = CFrame.new(currentCF.Position, aimPosition)
+                    camera.CFrame = currentCF:Lerp(targetCF, 0.3)
+                    
+                    toggleButton.Text = "AIM: " .. string.sub(currentTarget.Name, 1, 10)
+                    toggleButton.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
+                    return
+                end
+            end
+        end
+        
+        -- Si el objetivo no es válido, buscar uno nuevo
+        allTargets = getAllValidTargets()
+        if #allTargets > 0 then
+            targetIndex = 1
+            currentTarget = allTargets[1].player
+            targetDisplay.Text = string.format("Objetivo: %s (%.0fm)", 
+                currentTarget.Name, 
+                allTargets[1].distance)
+        else
+            currentTarget = nil
+            toggleButton.Text = "BUSCANDO..."
+            toggleButton.BackgroundColor3 = Color3.fromRGB(255, 150, 0)
+            targetDisplay.Text = "Objetivo: Ninguno"
+        end
+    end)
+    
+    aimEnabled = true
+    toggleButton.Text = "AIM: ON"
+    toggleButton.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
+end
+
+function stopAim()
+    if aimConnection then
+        aimConnection:Disconnect()
+        aimConnection = nil
+    end
+    aimEnabled = false
+    currentTarget = nil
+    toggleButton.Text = "AIM: OFF"
+    toggleButton.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+    targetDisplay.Text = "Objetivo: Ninguno"
+end
+
+-- ====== SISTEMA ESP RAINBOW ======
+
+local espBoxes = {}
+
+function createESP(player)
+    if not player.Character then return end
+    
+    local character = player.Character
+    local humanoid = character:FindFirstChildOfClass("Humanoid")
+    if not humanoid then return end
+    
+    -- Partes del cuerpo para el ESP
+    local parts = {
+        {name = "Head", size = Vector3.new(2, 1.2, 1.2)},
+        {name = "Torso", size = Vector3.new(2, 2, 1)},
+        {name = "Left Arm", size = Vector3.new(1, 2, 1)},
+        {name = "Right Arm", size = Vector3.new(1, 2, 1)},
+        {name = "Left Leg", size = Vector3.new(1, 2, 1)},
+        {name = "Right Leg", size = Vector3.new(1, 2, 1)}
+    }
+    
+    for _, partData in pairs(parts) do
+        local part = character:FindFirstChild(partData.name)
+        if part then
+            local box = Instance.new("BoxHandleAdornment")
+            box.Name = "ESP_" .. player.Name .. "_" .. partData.name
+            box.Adornee = part
+            box.AlwaysOnTop = true
+            box.ZIndex = 10
+            box.Size = partData.size
+            box.Transparency = 0.2
+            box.Color3 = Color3.fromHSV(tick() % 1, 1, 1)
+            box.Parent = Workspace
+            
+            espBoxes[player.Name .. "_" .. partData.name] = box
+        end
+    end
+end
+
+function removeESP(player)
+    for key, box in pairs(espBoxes) do
+        if string.find(key, player.Name) then
+            box:Destroy()
+            espBoxes[key] = nil
+        end
+    end
+end
+
+function updateESPColors()
+    if not ESPEnabled then return end
+    
+    local time = tick()
+    for _, box in pairs(espBoxes) do
+        if box and box.Parent then
+            -- Efecto rainbow que cambia
+            local hue = (time * 1.5) % 1
+            box.Color3 = Color3.fromHSV(hue, 1, 1)
+            
+            -- Hacer el ESP más visible
+            box.Transparency = 0.1
+        end
+    end
+end
+
+function startESP()
+    ESPEnabled = true
+    espButton.Text = "ESP: ON 🌈"
+    espButton.BackgroundColor3 = Color3.fromRGB(200, 50, 200)
+    
+    -- Crear ESP para todos los jugadores
+    for _, otherPlayer in pairs(Players:GetPlayers()) do
+        if otherPlayer ~= player then
+            if not isSameTeam(player, otherPlayer) then
+                createESP(otherPlayer)
+            end
+        end
+    end
+    
+    -- Actualizar colores continuamente
+    if not espUpdateConnection then
+        espUpdateConnection = RunService.RenderStepped:Connect(updateESPColors)
+    end
+end
+
+function stopESP()
+    ESPEnabled = false
+    espButton.Text = "ESP: OFF"
+    espButton.BackgroundColor3 = Color3.fromRGB(100, 50, 200)
+    
+    -- Eliminar todos los ESP
+    for key, box in pairs(espBoxes) do
+        box:Destroy()
+    end
+    espBoxes = {}
+    
+    if espUpdateConnection then
+        espUpdateConnection:Disconnect()
+        espUpdateConnection = nil
+    end
+end
+
+-- ====== CONTROLES ======
+
+local espUpdateConnection = nil
+
+-- Botones de la GUI
+toggleButton.MouseButton1Click:Connect(function()
+    if aimEnabled then
+        stopAim()
+    else
+        startAim()
+    end
+end)
+
+espButton.MouseButton1Click:Connect(function()
+    if ESPEnabled then
+        stopESP()
+    else
+        startESP()
+    end
+end)
+
+teamButton.MouseButton1Click:Connect(function()
+    teamCheck = not teamCheck
+    teamButton.Text = teamCheck and "TEAM: ON" or "TEAM: OFF"
+    teamButton.BackgroundColor3 = teamCheck and Color3.fromRGB(0, 150, 100) or Color3.fromRGB(100, 50, 50)
+    
+    -- Actualizar ESP si está activado
+    if ESPEnabled then
+        stopESP()
+        wait(0.1)
+        startESP()
+    end
+end)
+
+wallButton.MouseButton1Click:Connect(function()
+    wallCheck = not wallCheck
+    wallButton.Text = wallCheck and "WALL: ON" or "WALL: OFF"
+    wallButton.BackgroundColor3 = wallCheck and Color3.fromRGB(150, 100, 0) or Color3.fromRGB(100, 50, 50)
+end)
+
+switchButton.MouseButton1Click:Connect(function()
+    switchTarget()
+end)
+
+-- Teclas
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed then return end
+    
+    -- AIM (F)
+    if input.KeyCode == Enum.KeyCode.F then
+        if aimEnabled then
+            stopAim()
+        else
+            startAim()
+        end
+    end
+    
+    -- ESP (G)
+    if input.KeyCode == Enum.KeyCode.G then
+        if ESPEnabled then
+            stopESP()
+        else
+            startESP()
+        end
+    end
+    
+    -- Cambiar objetivo (Q)
+    if input.KeyCode == Enum.KeyCode.Q then
+        if aimEnabled then
+            switchTarget()
+        end
+    end
+    
+    -- Mostrar/ocultar GUI (H)
+    if input.KeyCode == Enum.KeyCode.H then
+        mainFrame.Visible = not mainFrame.Visible
+    end
+    
+    -- Team check (T)
+    if input.KeyCode == Enum.KeyCode.T then
+        teamCheck = not teamCheck
+        teamButton.Text = teamCheck and "TEAM: ON" or "TEAM: OFF"
+        teamButton.BackgroundColor3 = teamCheck and Color3.fromRGB(0, 150, 100) or Color3.fromRGB(100, 50, 50)
+    end
+    
+    -- Wall check (W)
+    if input.KeyCode == Enum.KeyCode.W then
+        wallCheck = not wallCheck
+        wallButton.Text = wallCheck and "WALL: ON" or "WALL: OFF"
+        wallButton.BackgroundColor3 = wallCheck and Color3.fromRGB(150, 100, 0) or Color3.fromRGB(100, 50, 50)
+    end
+end)
+
+-- ====== MANEJO DE JUGADORES ======
+
+Players.PlayerAdded:Connect(function(newPlayer)
+    if ESPEnabled and not isSameTeam(player, newPlayer) then
+        createESP(newPlayer)
+    end
+end)
+
+Players.PlayerRemoving:Connect(function(leavingPlayer)
+    removeESP(leavingPlayer)
+end)
+
+-- ====== INICIALIZACIÓN ======
+
+print("========================================")
+print("🎯 AIM PRO SYSTEM - CARGADO")
+print("========================================")
+print("CONTROLES PRINCIPALES:")
+print("• F = Activar/Desactivar AIM")
+print("• G = Activar/Desactivar ESP Rainbow")
+print("• Q = Cambiar objetivo (cuando AIM está activo)")
+print("• H = Mostrar/Ocultar GUI")
+print("• T = Alternar Team Check")
+print("• W = Alternar Wall Check")
+print("========================================")
+print("CONFIGURACIÓN INICIAL:")
+print("• Team Check: ACTIVADO")
+print("• Wall Check: ACTIVADO")
+print("• AIM apunta al torso/pecho")
+print("========================================")
+
+-- Estado inicial
+stopAim()
+stopESP()
+
+-- Hacer que el ESP sea más visible
+task.spawn(function()
+    while true do
+        if ESPEnabled then
+            updateESPColors()
+        end
+        wait(0.05) -- Actualizar rápido para mejor efecto rainbow
+    end
+end)
