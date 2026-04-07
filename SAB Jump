@@ -1,0 +1,136 @@
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local player = Players.LocalPlayer
+
+-- ==========================================
+-- 1. CONFIGURACIÓN: CAMBIA TU CLAVE AQUÍ
+-- ==========================================
+local CLAVE_PARA_ENTRAR = "11147" 
+-- ==========================================
+
+-- Intentar usar CoreGui para que Xeno no falle
+local ParentGui = game:GetService("CoreGui") or player:WaitForChild("PlayerGui")
+
+-- --- 2. INTERFAZ DE CONTRASEÑA ---
+local authGui = Instance.new("ScreenGui", ParentGui)
+authGui.Name = "SistemaAcceso"
+
+local loginFrame = Instance.new("Frame", authGui)
+loginFrame.Size = UDim2.new(0, 280, 0, 180)
+loginFrame.Position = UDim2.new(0.5, -140, 0.4, 0)
+loginFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
+Instance.new("UICorner", loginFrame)
+
+local loginTitle = Instance.new("TextLabel", loginFrame)
+loginTitle.Size = UDim2.new(1, 0, 0, 50)
+loginTitle.BackgroundTransparency = 1
+loginTitle.Text = "ACCESO REQUERIDO"
+loginTitle.TextColor3 = Color3.new(1, 1, 1)
+loginTitle.Font = Enum.Font.GothamBold
+loginTitle.TextSize = 16
+
+local keyInput = Instance.new("TextBox", loginFrame)
+keyInput.Size = UDim2.new(0.8, 0, 0, 35)
+keyInput.Position = UDim2.new(0.1, 0, 0.35, 0)
+keyInput.PlaceholderText = "Escribe la contraseña..."
+keyInput.BackgroundColor3 = Color3.fromRGB(45, 45, 50)
+keyInput.TextColor3 = Color3.new(1, 1, 1)
+Instance.new("UICorner", keyInput)
+
+local enterBtn = Instance.new("TextButton", loginFrame)
+enterBtn.Size = UDim2.new(0.8, 0, 0, 40)
+enterBtn.Position = UDim2.new(0.1, 0, 0.65, 0)
+enterBtn.BackgroundColor3 = Color3.fromRGB(0, 120, 255)
+enterBtn.Text = "ENTRAR"
+enterBtn.TextColor3 = Color3.new(1, 1, 1)
+enterBtn.Font = Enum.Font.GothamBold
+Instance.new("UICorner", enterBtn)
+
+-- --- 3. FUNCIÓN DEL MENÚ (TU CÓDIGO) ---
+local function EjecutarMenuBoost()
+    local screenGui = Instance.new("ScreenGui", ParentGui)
+    screenGui.Name = "BoostMenu"
+
+    local mainFrame = Instance.new("Frame", screenGui)
+    mainFrame.Size = UDim2.new(0, 220, 0, 160)
+    mainFrame.Position = UDim2.new(0.5, -110, 0.4, 0)
+    mainFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 40)
+    mainFrame.BorderSizePixel = 0
+    mainFrame.Active = true
+    Instance.new("UICorner", mainFrame).CornerRadius = UDim.new(0, 15)
+
+    local title = Instance.new("TextLabel", mainFrame)
+    title.Size = UDim2.new(1, 0, 0, 40)
+    title.Text = "CONTROL DE BOOST"
+    title.TextColor3 = Color3.new(1, 1, 1)
+    title.Font = Enum.Font.GothamBold
+    title.BackgroundTransparency = 1
+
+    -- Sistema Draggable (Movimiento)
+    local dragging, dragStart, startPos
+    mainFrame.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = true; dragStart = input.Position; startPos = mainFrame.Position
+        end
+    end)
+    UserInputService.InputChanged:Connect(function(input)
+        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+            local delta = input.Position - dragStart
+            mainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+        end
+    end)
+    UserInputService.InputEnded:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end end)
+
+    local function createButton(text, pos)
+        local btn = Instance.new("TextButton", mainFrame)
+        btn.Size = UDim2.new(0.9, 0, 0, 40)
+        btn.Position = pos
+        btn.BackgroundColor3 = Color3.fromRGB(50, 50, 55)
+        btn.Text = text
+        btn.TextColor3 = Color3.new(0.8, 0.8, 0.8)
+        btn.Font = Enum.Font.GothamSemibold
+        Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 8)
+        return btn
+    end
+
+    local speedBtn = createButton("Velocidad: NORMAL", UDim2.new(0.05, 0, 0.35, 0))
+    local jumpBtn = createButton("Salto: NORMAL", UDim2.new(0.05, 0, 0.65, 0))
+
+    local speedActive, jumpActive = false, false
+
+    speedBtn.MouseButton1Click:Connect(function()
+        local hum = player.Character and player.Character:FindFirstChild("Humanoid")
+        if hum then
+            speedActive = not speedActive
+            hum.WalkSpeed = speedActive and 24 or 16
+            speedBtn.Text = speedActive and "Velocidad: BOOST" or "Velocidad: NORMAL"
+            speedBtn.BackgroundColor3 = speedActive and Color3.fromRGB(0, 120, 255) or Color3.fromRGB(50, 50, 55)
+            speedBtn.TextColor3 = speedActive and Color3.new(1, 1, 1) or Color3.new(0.8, 0.8, 0.8)
+        end
+    end)
+
+    jumpBtn.MouseButton1Click:Connect(function()
+        local hum = player.Character and player.Character:FindFirstChild("Humanoid")
+        if hum then
+            jumpActive = not jumpActive
+            hum.UseJumpPower = true 
+            hum.JumpPower = jumpActive and 75 or 50
+            jumpBtn.Text = jumpActive and "Salto: LIGERO" or "Salto: NORMAL"
+            jumpBtn.BackgroundColor3 = jumpActive and Color3.fromRGB(0, 200, 100) or Color3.fromRGB(50, 50, 55)
+            jumpBtn.TextColor3 = jumpActive and Color3.new(1, 1, 1) or Color3.new(0.8, 0.8, 0.8)
+        end
+    end)
+end
+
+-- --- 4. LÓGICA DE VALIDACIÓN ---
+enterBtn.MouseButton1Click:Connect(function()
+    if keyInput.Text == CLAVE_PARA_ENTRAR then
+        authGui:Destroy() -- Cierra el login
+        EjecutarMenuBoost() -- Abre tu menú
+    else
+        keyInput.Text = ""
+        keyInput.PlaceholderText = "CLAVE INCORRECTA"
+        task.wait(1)
+        keyInput.PlaceholderText = "Escribe la contraseña..."
+    end
+end)
