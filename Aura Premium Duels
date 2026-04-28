@@ -1,0 +1,257 @@
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+local Players = game:GetService("Players")
+local Camera = workspace.CurrentCamera
+local LocalPlayer = Players.LocalPlayer
+
+-- --- CONFIGURACION ---
+local aimActive = false
+local skeletonsEnabled = false
+local shiftLockEnabled = false
+local hitboxEnabled = false
+local fuerzaMagneto = 0.15 
+local radioDeteccion = 500 
+local parteObjetivo = "UpperTorso" 
+local hitboxSize = 5
+
+-- --- 1. UI ELITE CON CATEGORIAS ---
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "AuraCompany_V3_Elite"
+screenGui.ResetOnSpawn = false
+screenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
+
+local mainFrame = Instance.new("Frame")
+mainFrame.Size = UDim2.new(0, 280, 0, 280)
+mainFrame.Position = UDim2.new(0.5, -140, 0.5, -140)
+mainFrame.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
+mainFrame.Parent = screenGui
+Instance.new("UICorner", mainFrame).CornerRadius = UDim.new(0, 12)
+
+local title = Instance.new("TextLabel")
+title.Size = UDim2.new(1, 0, 0, 40)
+title.BackgroundTransparency = 1
+title.Text = "AURA COMPANY PREMIUM"
+title.TextColor3 = Color3.fromRGB(0, 170, 255)
+title.Font = Enum.Font.GothamBold
+title.TextSize = 14
+title.Parent = mainFrame
+
+-- --- SISTEMA DE PESTAÑAS ---
+local tabContainer = Instance.new("Frame")
+tabContainer.Size = UDim2.new(1, 0, 0, 30)
+tabContainer.Position = UDim2.new(0, 0, 0, 40)
+tabContainer.BackgroundTransparency = 1
+tabContainer.Parent = mainFrame
+
+local btnMain = Instance.new("TextButton", tabContainer)
+btnMain.Size = UDim2.new(0.5, 0, 1, 0)
+btnMain.Text = "PRINCIPAL"
+btnMain.BackgroundTransparency = 1
+btnMain.TextColor3 = Color3.new(1, 1, 1)
+btnMain.Font = Enum.Font.GothamBold
+
+local btnHitbox = Instance.new("TextButton", tabContainer)
+btnHitbox.Size = UDim2.new(0.5, 0, 1, 0)
+btnHitbox.Position = UDim2.new(0.5, 0, 0, 0)
+btnHitbox.Text = "HITBOXES"
+btnHitbox.BackgroundTransparency = 1
+btnHitbox.TextColor3 = Color3.new(1, 1, 1)
+btnHitbox.Font = Enum.Font.GothamBold
+
+local indicator = Instance.new("Frame", tabContainer)
+indicator.Size = UDim2.new(0.4, 0, 0, 2)
+indicator.Position = UDim2.new(0.05, 0, 0.9, 0)
+indicator.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
+
+-- Contenedores
+local pageMain = Instance.new("Frame", mainFrame)
+pageMain.Size = UDim2.new(1, 0, 0.7, 0)
+pageMain.Position = UDim2.new(0, 0, 0.3, 0)
+pageMain.BackgroundTransparency = 1
+
+local pageHitbox = Instance.new("Frame", mainFrame)
+pageHitbox.Size = UDim2.new(1, 0, 0.7, 0)
+pageHitbox.Position = UDim2.new(0, 0, 0.3, 0)
+pageHitbox.BackgroundTransparency = 1
+pageHitbox.Visible = false
+
+-- --- COMPONENTES PAGINA PRINCIPAL ---
+local skeletonBtn = Instance.new("TextButton", pageMain)
+skeletonBtn.Size = UDim2.new(0.9, 0, 0, 35)
+skeletonBtn.Position = UDim2.new(0.05, 0, 0.05, 0)
+skeletonBtn.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+skeletonBtn.Text = "SKELETONS: OFF"
+skeletonBtn.TextColor3 = Color3.new(1, 1, 1)
+skeletonBtn.Font = Enum.Font.GothamBold
+Instance.new("UICorner", skeletonBtn)
+
+local shiftLockBtn = Instance.new("TextButton", pageMain)
+shiftLockBtn.Size = UDim2.new(0.9, 0, 0, 35)
+shiftLockBtn.Position = UDim2.new(0.05, 0, 0.22, 0)
+shiftLockBtn.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+shiftLockBtn.Text = "SHIFT LOCK [0]: OFF"
+shiftLockBtn.TextColor3 = Color3.new(1, 1, 1)
+shiftLockBtn.Font = Enum.Font.GothamBold
+Instance.new("UICorner", shiftLockBtn)
+
+local strengthLabel = Instance.new("TextLabel", pageMain)
+strengthLabel.Size = UDim2.new(0.9, 0, 0, 20)
+strengthLabel.Position = UDim2.new(0.05, 0, 0.45, 0)
+strengthLabel.BackgroundTransparency = 1
+strengthLabel.Text = "FUERZA AIM: 0.15"
+strengthLabel.TextColor3 = Color3.new(0.8, 0.8, 0.8)
+strengthLabel.Font = Enum.Font.Gotham
+strengthLabel.TextSize = 11
+
+local sliderBar = Instance.new("Frame", pageMain)
+sliderBar.Size = UDim2.new(0.8, 0, 0, 4)
+sliderBar.Position = UDim2.new(0.1, 0, 0.58, 0)
+sliderBar.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+
+local sliderDot = Instance.new("TextButton", sliderBar)
+sliderDot.Size = UDim2.new(0, 14, 0, 14)
+sliderDot.Position = UDim2.new(0.3, -7, 0.5, -7)
+sliderDot.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
+sliderDot.Text = ""
+Instance.new("UICorner", sliderDot).CornerRadius = UDim.new(1, 0)
+
+-- --- COMPONENTES PAGINA HITBOX ---
+local hitboxBtn = Instance.new("TextButton", pageHitbox)
+hitboxBtn.Size = UDim2.new(0.9, 0, 0, 35)
+hitboxBtn.Position = UDim2.new(0.05, 0, 0.05, 0)
+hitboxBtn.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+hitboxBtn.Text = "HITBOX EXPANDER: OFF"
+hitboxBtn.TextColor3 = Color3.new(1, 1, 1)
+hitboxBtn.Font = Enum.Font.GothamBold
+Instance.new("UICorner", hitboxBtn)
+
+-- --- LOGICA NAVEGACION ---
+btnMain.MouseButton1Click:Connect(function()
+	pageMain.Visible = true; pageHitbox.Visible = false
+	indicator:TweenPosition(UDim2.new(0.05, 0, 0.9, 0), "Out", "Quad", 0.2)
+end)
+btnHitbox.MouseButton1Click:Connect(function()
+	pageMain.Visible = false; pageHitbox.Visible = true
+	indicator:TweenPosition(UDim2.new(0.55, 0, 0.9, 0), "Out", "Quad", 0.2)
+end)
+
+-- --- LOGICA SLIDER ---
+local draggingSlider = false
+sliderDot.MouseButton1Down:Connect(function() draggingSlider = true end)
+UserInputService.InputEnded:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 then draggingSlider = false end end)
+UserInputService.InputChanged:Connect(function(input)
+	if draggingSlider and input.UserInputType == Enum.UserInputType.MouseMovement then
+		local percent = math.clamp((UserInputService:GetMouseLocation().X - sliderBar.AbsolutePosition.X) / sliderBar.AbsoluteSize.X, 0, 1)
+		sliderDot.Position = UDim2.new(percent, -7, 0.5, -7)
+		fuerzaMagneto = percent * 0.5
+		strengthLabel.Text = string.format("FUERZA AIM: %.2f", fuerzaMagneto)
+	end
+end)
+
+-- --- LOGICA SHIFT LOCK ---
+local function toggleShiftLock()
+	shiftLockEnabled = not shiftLockEnabled
+	shiftLockBtn.Text = shiftLockEnabled and "SHIFT LOCK [0]: ON" or "SHIFT LOCK [0]: OFF"
+	shiftLockBtn.BackgroundColor3 = shiftLockEnabled and Color3.fromRGB(0, 140, 255) or Color3.fromRGB(25, 25, 25)
+	
+	if not shiftLockEnabled then
+		UserInputService.MouseBehavior = Enum.MouseBehavior.Default
+	end
+end
+shiftLockBtn.MouseButton1Click:Connect(toggleShiftLock)
+
+UserInputService.InputBegan:Connect(function(i, g)
+	if not g and (i.KeyCode == Enum.KeyCode.Zero or i.KeyCode == Enum.KeyCode.KeypadZero) then toggleShiftLock() end
+	if not g and i.UserInputType == Enum.UserInputType.MouseButton2 then aimActive = true end
+end)
+UserInputService.InputEnded:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton2 then aimActive = false end end)
+
+-- --- BUCLE DE RENDERIZADO ---
+RunService.RenderStepped:Connect(function()
+	if shiftLockEnabled then
+		UserInputService.MouseBehavior = Enum.MouseBehavior.LockCenter
+	end
+
+	-- Skeletons/X-Ray
+	if skeletonsEnabled then
+		local rainbow = Color3.fromHSV(tick() % 5 / 5, 1, 1)
+		for _, p in pairs(Players:GetPlayers()) do
+			if p ~= LocalPlayer and p.Character then
+				local hi = p.Character:FindFirstChild("AuraHighlight") or Instance.new("Highlight", p.Character)
+				hi.Name = "AuraHighlight"
+				hi.FillColor = rainbow
+				hi.OutlineColor = rainbow
+				hi.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+			end
+		end
+	end
+
+	-- Hitbox Expander (TORSO EXPANDIDO)
+	for _, p in pairs(Players:GetPlayers()) do
+		if p ~= LocalPlayer and p.Character then
+			local torso = p.Character:FindFirstChild("UpperTorso") or p.Character:FindFirstChild("Torso")
+			if torso then
+				if hitboxEnabled then
+					torso.Size = Vector3.new(hitboxSize, hitboxSize, hitboxSize)
+					torso.Transparency = 0.6
+					torso.Color = Color3.fromRGB(0, 170, 255) -- Color Aura Company
+					torso.CanCollide = false
+				else
+					torso.Size = (p.Character:FindFirstChild("UpperTorso")) and Vector3.new(1.6, 1.6, 1) or Vector3.new(2, 2, 1)
+					torso.Transparency = 0
+				end
+			end
+		end
+	end
+
+	-- Aim Assist
+	if aimActive then
+		local target = nil
+		local shortestDist = radioDeteccion
+		for _, p in pairs(Players:GetPlayers()) do
+			if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("Humanoid") and p.Character.Humanoid.Health > 0 then
+				local part = p.Character:FindFirstChild(parteObjetivo)
+				if part then
+					local pos, onScreen = Camera:WorldToViewportPoint(part.Position)
+					if onScreen then
+						local dist = (Vector2.new(pos.X, pos.Y) - Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2)).Magnitude
+						if dist < shortestDist then target = part shortestDist = dist end
+					end
+				end
+			end
+		end
+		if target then Camera.CFrame = Camera.CFrame:Lerp(CFrame.new(Camera.CFrame.Position, target.Position), fuerzaMagneto) end
+	end
+end)
+
+skeletonBtn.MouseButton1Click:Connect(function()
+	skeletonsEnabled = not skeletonsEnabled
+	skeletonBtn.Text = skeletonsEnabled and "SKELETONS: ON" or "SKELETONS: OFF"
+	skeletonBtn.BackgroundColor3 = skeletonsEnabled and Color3.fromRGB(0, 200, 100) or Color3.fromRGB(25, 25, 25)
+	if not skeletonsEnabled then
+		for _, p in pairs(Players:GetPlayers()) do
+			if p.Character and p.Character:FindFirstChild("AuraHighlight") then p.Character.AuraHighlight:Destroy() end
+		end
+	end
+end)
+
+hitboxBtn.MouseButton1Click:Connect(function()
+	hitboxEnabled = not hitboxEnabled
+	hitboxBtn.Text = hitboxEnabled and "HITBOX EXPANDER: ON" or "HITBOX EXPANDER: OFF"
+	hitboxBtn.BackgroundColor3 = hitboxEnabled and Color3.fromRGB(0, 170, 255) or Color3.fromRGB(25, 25, 25)
+end)
+
+-- Draggable
+local dFrame, dStart, sPos
+mainFrame.InputBegan:Connect(function(i) 
+	if i.UserInputType == Enum.UserInputType.MouseButton1 and not draggingSlider then 
+		dFrame = true dStart = i.Position sPos = mainFrame.Position 
+	end 
+end)
+UserInputService.InputChanged:Connect(function(i) 
+	if dFrame and i.UserInputType == Enum.UserInputType.MouseMovement then
+		local delta = i.Position - dStart
+		mainFrame.Position = UDim2.new(sPos.X.Scale, sPos.X.Offset + delta.X, sPos.Y.Scale, sPos.Y.Offset + delta.Y)
+	end 
+end)
+UserInputService.InputEnded:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 then dFrame = false end end)
