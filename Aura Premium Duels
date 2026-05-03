@@ -14,7 +14,7 @@ local hitboxEnabled = false
 local xrayEnabled = false
 local fullBrightEnabled = false
 local wallCheckEnabled = false 
-local streamerMode = false 
+local streamerMode = true -- Iniciamos en True para que el panel esté oculto al entrar
 local fuerzaMagneto = 0.15 
 local radioDeteccion = 500 
 local parteObjetivo = "UpperTorso" 
@@ -37,6 +37,7 @@ local mainFrame = Instance.new("Frame")
 mainFrame.Size = UDim2.new(0, 260, 0, 310) 
 mainFrame.Position = UDim2.new(0.5, -130, 0.5, -155)
 mainFrame.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
+mainFrame.Visible = false -- El panel inicia oculto visualmente
 mainFrame.Parent = screenGui
 Instance.new("UICorner", mainFrame).CornerRadius = UDim.new(0, 10)
 
@@ -271,6 +272,20 @@ lightBtn.TextColor3 = Color3.new(1, 1, 1)
 lightBtn.Font = Enum.Font.GothamBold
 Instance.new("UICorner", lightBtn)
 
+-- --- FUNCIONES DE ACTUALIZACION VISUAL ---
+local function updateAimbotUI()
+    if aimActive then
+        aimbotBtn.Text = "AIMBOT: ACTIVE"
+        aimbotBtn.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
+    elseif aimbotEnabled then
+        aimbotBtn.Text = "AIMBOT: ON"
+        aimbotBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
+    else
+        aimbotBtn.Text = "AIMBOT: OFF"
+        aimbotBtn.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+    end
+end
+
 -- --- LOGICA BOTONES ---
 
 wallCheckBtn.MouseButton1Click:Connect(function()
@@ -306,9 +321,9 @@ modeBtn.MouseButton1Click:Connect(function()
 end)
 
 aimbotBtn.MouseButton1Click:Connect(function()
-    aimbotEnabled = not aimbotEnabled; aimActive = false
-    aimbotBtn.Text = aimbotEnabled and "AIMBOT: ON" or "AIMBOT: OFF"
-    aimbotBtn.BackgroundColor3 = aimbotEnabled and Color3.fromRGB(0, 170, 255) or Color3.fromRGB(25, 25, 25)
+    aimbotEnabled = not aimbotEnabled
+    aimActive = false
+    updateAimbotUI()
 end)
 
 bindBtn.MouseButton1Click:Connect(function() isBinding = true; bindBtn.Text = "..." end)
@@ -424,27 +439,23 @@ RunService.RenderStepped:Connect(function()
         end
     end
 
-    -- --- LOGICA HITBOX (AHORA FUNCIONA INVISIBLE EN MODO STREAMER) ---
+    -- --- LOGICA HITBOX (INVISIBLE EN MODO STREAMER) ---
     for _, p in pairs(Players:GetPlayers()) do
         if p ~= LocalPlayer and p.Character then
             local torso = p.Character:FindFirstChild("UpperTorso") or p.Character:FindFirstChild("Torso")
             if torso and p.Character:FindFirstChild("Humanoid") then
                 if hitboxEnabled then
-                    -- Si Hitbox está ON: Siempre mantenemos el tamaño "Gordo"
                     torso.Size = Vector3.new(hitboxSize, hitboxSize, hitboxSize)
                     torso.CanCollide = false
                     torso.Massless = true
                     
                     if streamerMode then
-                        -- En modo streamer: Tamaño gordo pero TRANSPARENCIA TOTAL (No se ve nada)
                         torso.Transparency = 1
                     else
-                        -- En modo normal: Tamaño gordo y color azul/transparencia elegida
                         torso.Transparency = hitboxTransparency
                         torso.Color = Color3.fromRGB(0, 170, 255)
                     end
                 else
-                    -- Si Hitbox está OFF: Restauramos a la normalidad absoluta
                     if torso.Size.X > 2.1 then 
                         torso.Size = (p.Character:FindFirstChild("UpperTorso")) and Vector3.new(1.6, 1.6, 1) or Vector3.new(2, 2, 1)
                         torso.Transparency = 0 
@@ -513,7 +524,7 @@ end)
 UserInputService.InputBegan:Connect(function(i, g)
     if g then return end
     
-    -- MODO STREAMER (TECLA L)
+    -- MODO STREAMER / MOSTRAR PANEL (TECLA L)
     if i.KeyCode == Enum.KeyCode.L then
         streamerMode = not streamerMode
         mainFrame.Visible = not streamerMode
@@ -522,9 +533,16 @@ UserInputService.InputBegan:Connect(function(i, g)
     if isBinding and i.UserInputType == Enum.UserInputType.Keyboard then
         aimbotBind = i.KeyCode; bindBtn.Text = "BIND: " .. i.KeyCode.Name; isBinding = false; return
     end
-    if i.KeyCode == aimbotBind and aimbotEnabled then
-        aimActive = not aimActive; aimbotBtn.Text = aimActive and "AIMBOT: ACTIVE" or "AIMBOT: ON"
-        aimbotBtn.BackgroundColor3 = aimActive and Color3.fromRGB(255, 50, 50) or Color3.fromRGB(0, 170, 255)
+
+    -- CORRECCION BIND Q: Activa todo de una
+    if i.KeyCode == aimbotBind then
+        if not aimbotEnabled then
+            aimbotEnabled = true
+            aimActive = true
+        else
+            aimActive = not aimActive
+        end
+        updateAimbotUI()
     end
 end)
 
