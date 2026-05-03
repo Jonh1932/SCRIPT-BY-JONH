@@ -1,257 +1,546 @@
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
 local Players = game:GetService("Players")
+local Lighting = game:GetService("Lighting")
 local Camera = workspace.CurrentCamera
 local LocalPlayer = Players.LocalPlayer
 
 -- --- CONFIGURACION ---
+local aimbotEnabled = false
 local aimActive = false
 local skeletonsEnabled = false
 local shiftLockEnabled = false
 local hitboxEnabled = false
+local xrayEnabled = false
+local fullBrightEnabled = false
+local wallCheckEnabled = false 
+local streamerMode = false 
 local fuerzaMagneto = 0.15 
 local radioDeteccion = 500 
 local parteObjetivo = "UpperTorso" 
-local hitboxSize = 5
+local hitboxSize = 5 
+local hitboxTransparency = 0.6 
+local aimbotBind = Enum.KeyCode.Q 
+local isBinding = false
+local aimMode = "CAMARA" 
 
--- --- 1. UI ELITE CON CATEGORIAS ---
+local noRecoilEnabled = false
+local rapidFireEnabled = false
+
+-- --- UI PRINCIPAL ---
 local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "AuraCompany_V3_Elite"
 screenGui.ResetOnSpawn = false
 screenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
 
 local mainFrame = Instance.new("Frame")
-mainFrame.Size = UDim2.new(0, 280, 0, 280)
-mainFrame.Position = UDim2.new(0.5, -140, 0.5, -140)
+mainFrame.Size = UDim2.new(0, 260, 0, 310) 
+mainFrame.Position = UDim2.new(0.5, -130, 0.5, -155)
 mainFrame.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
 mainFrame.Parent = screenGui
-Instance.new("UICorner", mainFrame).CornerRadius = UDim.new(0, 12)
+Instance.new("UICorner", mainFrame).CornerRadius = UDim.new(0, 10)
 
 local title = Instance.new("TextLabel")
-title.Size = UDim2.new(1, 0, 0, 40)
+title.Size = UDim2.new(1, 0, 0, 35)
 title.BackgroundTransparency = 1
 title.Text = "AURA COMPANY PREMIUM"
 title.TextColor3 = Color3.fromRGB(0, 170, 255)
 title.Font = Enum.Font.GothamBold
-title.TextSize = 14
+title.TextSize = 13
 title.Parent = mainFrame
 
 -- --- SISTEMA DE PESTAÑAS ---
 local tabContainer = Instance.new("Frame")
-tabContainer.Size = UDim2.new(1, 0, 0, 30)
-tabContainer.Position = UDim2.new(0, 0, 0, 40)
+tabContainer.Size = UDim2.new(1, 0, 0, 25)
+tabContainer.Position = UDim2.new(0, 0, 0, 35)
 tabContainer.BackgroundTransparency = 1
 tabContainer.Parent = mainFrame
 
-local btnMain = Instance.new("TextButton", tabContainer)
-btnMain.Size = UDim2.new(0.5, 0, 1, 0)
-btnMain.Text = "PRINCIPAL"
-btnMain.BackgroundTransparency = 1
-btnMain.TextColor3 = Color3.new(1, 1, 1)
-btnMain.Font = Enum.Font.GothamBold
+local function createTab(name, pos)
+    local btn = Instance.new("TextButton", tabContainer)
+    btn.Size = UDim2.new(0.25, 0, 1, 0)
+    btn.Position = UDim2.new(pos, 0, 0, 0)
+    btn.Text = name
+    btn.BackgroundTransparency = 1
+    btn.TextColor3 = Color3.new(1, 1, 1)
+    btn.Font = Enum.Font.GothamBold
+    btn.TextSize = 8
+    return btn
+end
 
-local btnHitbox = Instance.new("TextButton", tabContainer)
-btnHitbox.Size = UDim2.new(0.5, 0, 1, 0)
-btnHitbox.Position = UDim2.new(0.5, 0, 0, 0)
-btnHitbox.Text = "HITBOXES"
-btnHitbox.BackgroundTransparency = 1
-btnHitbox.TextColor3 = Color3.new(1, 1, 1)
-btnHitbox.Font = Enum.Font.GothamBold
+local btnMain = createTab("MAIN", 0)
+local btnHitbox = createTab("HITBOX", 0.25)
+local btnCombat = createTab("COMBAT", 0.50)
+local btnVision = createTab("VISION", 0.75)
 
 local indicator = Instance.new("Frame", tabContainer)
-indicator.Size = UDim2.new(0.4, 0, 0, 2)
-indicator.Position = UDim2.new(0.05, 0, 0.9, 0)
+indicator.Size = UDim2.new(0.2, 0, 0, 2)
+indicator.Position = UDim2.new(0.025, 0, 0.9, 0)
 indicator.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
 
--- Contenedores
-local pageMain = Instance.new("Frame", mainFrame)
-pageMain.Size = UDim2.new(1, 0, 0.7, 0)
-pageMain.Position = UDim2.new(0, 0, 0.3, 0)
-pageMain.BackgroundTransparency = 1
+local function createPage()
+    local f = Instance.new("Frame", mainFrame)
+    f.Size = UDim2.new(1, 0, 0, 240)
+    f.Position = UDim2.new(0, 0, 0, 65)
+    f.BackgroundTransparency = 1
+    f.Visible = false
+    return f
+end
 
-local pageHitbox = Instance.new("Frame", mainFrame)
-pageHitbox.Size = UDim2.new(1, 0, 0.7, 0)
-pageHitbox.Position = UDim2.new(0, 0, 0.3, 0)
-pageHitbox.BackgroundTransparency = 1
-pageHitbox.Visible = false
+local pageMain = createPage(); pageMain.Visible = true
+local pageHitbox = createPage()
+local pageCombat = createPage()
+local pageVision = createPage()
 
--- --- COMPONENTES PAGINA PRINCIPAL ---
-local skeletonBtn = Instance.new("TextButton", pageMain)
-skeletonBtn.Size = UDim2.new(0.9, 0, 0, 35)
-skeletonBtn.Position = UDim2.new(0.05, 0, 0.05, 0)
-skeletonBtn.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-skeletonBtn.Text = "SKELETONS: OFF"
-skeletonBtn.TextColor3 = Color3.new(1, 1, 1)
-skeletonBtn.Font = Enum.Font.GothamBold
-Instance.new("UICorner", skeletonBtn)
+-- --- COMPONENTES MAIN ---
+local aimbotBtn = Instance.new("TextButton", pageMain)
+aimbotBtn.Size = UDim2.new(0.9, 0, 0, 30)
+aimbotBtn.Position = UDim2.new(0.05, 0, 0, 0)
+aimbotBtn.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+aimbotBtn.Text = "AIMBOT: OFF"
+aimbotBtn.TextColor3 = Color3.new(1, 1, 1)
+aimbotBtn.Font = Enum.Font.GothamBold
+Instance.new("UICorner", aimbotBtn)
 
-local shiftLockBtn = Instance.new("TextButton", pageMain)
-shiftLockBtn.Size = UDim2.new(0.9, 0, 0, 35)
-shiftLockBtn.Position = UDim2.new(0.05, 0, 0.22, 0)
-shiftLockBtn.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-shiftLockBtn.Text = "SHIFT LOCK [0]: OFF"
-shiftLockBtn.TextColor3 = Color3.new(1, 1, 1)
-shiftLockBtn.Font = Enum.Font.GothamBold
-Instance.new("UICorner", shiftLockBtn)
+local wallCheckBtn = Instance.new("TextButton", pageMain)
+wallCheckBtn.Size = UDim2.new(0.9, 0, 0, 30)
+wallCheckBtn.Position = UDim2.new(0.05, 0, 0, 35)
+wallCheckBtn.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+wallCheckBtn.Text = "WALL CHECK: OFF"
+wallCheckBtn.TextColor3 = Color3.new(1, 1, 1)
+wallCheckBtn.Font = Enum.Font.GothamBold
+Instance.new("UICorner", wallCheckBtn)
+
+local modeBtn = Instance.new("TextButton", pageMain)
+modeBtn.Size = UDim2.new(0.43, 0, 0, 25)
+modeBtn.Position = UDim2.new(0.05, 0, 0, 70)
+modeBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+modeBtn.Text = "MODO: " .. aimMode
+modeBtn.TextColor3 = Color3.fromRGB(0, 255, 170)
+modeBtn.Font = Enum.Font.GothamBold
+modeBtn.TextSize = 10
+Instance.new("UICorner", modeBtn)
+
+local bindBtn = Instance.new("TextButton", pageMain)
+bindBtn.Size = UDim2.new(0.43, 0, 0, 25)
+bindBtn.Position = UDim2.new(0.52, 0, 0, 70)
+bindBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+bindBtn.Text = "BIND: Q"
+bindBtn.TextColor3 = Color3.fromRGB(0, 170, 255)
+bindBtn.Font = Enum.Font.GothamBold
+bindBtn.TextSize = 10
+Instance.new("UICorner", bindBtn)
 
 local strengthLabel = Instance.new("TextLabel", pageMain)
 strengthLabel.Size = UDim2.new(0.9, 0, 0, 20)
-strengthLabel.Position = UDim2.new(0.05, 0, 0.45, 0)
+strengthLabel.Position = UDim2.new(0.05, 0, 0, 100)
 strengthLabel.BackgroundTransparency = 1
 strengthLabel.Text = "FUERZA AIM: 0.15"
 strengthLabel.TextColor3 = Color3.new(0.8, 0.8, 0.8)
 strengthLabel.Font = Enum.Font.Gotham
-strengthLabel.TextSize = 11
+strengthLabel.TextSize = 10
 
-local sliderBar = Instance.new("Frame", pageMain)
-sliderBar.Size = UDim2.new(0.8, 0, 0, 4)
-sliderBar.Position = UDim2.new(0.1, 0, 0.58, 0)
-sliderBar.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+local sliderBarAim = Instance.new("Frame", pageMain)
+sliderBarAim.Size = UDim2.new(0.8, 0, 0, 4)
+sliderBarAim.Position = UDim2.new(0.1, 0, 0, 125)
+sliderBarAim.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
 
-local sliderDot = Instance.new("TextButton", sliderBar)
-sliderDot.Size = UDim2.new(0, 14, 0, 14)
-sliderDot.Position = UDim2.new(0.3, -7, 0.5, -7)
-sliderDot.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
-sliderDot.Text = ""
-Instance.new("UICorner", sliderDot).CornerRadius = UDim.new(1, 0)
+local sliderDotAim = Instance.new("TextButton", sliderBarAim)
+sliderDotAim.Size = UDim2.new(0, 12, 0, 12)
+sliderDotAim.Position = UDim2.new(0.3, -6, 0.5, -6)
+sliderDotAim.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
+sliderDotAim.Text = ""
+Instance.new("UICorner", sliderDotAim).CornerRadius = UDim.new(1, 0)
 
--- --- COMPONENTES PAGINA HITBOX ---
+-- --- COMPONENTES HITBOX ---
 local hitboxBtn = Instance.new("TextButton", pageHitbox)
-hitboxBtn.Size = UDim2.new(0.9, 0, 0, 35)
-hitboxBtn.Position = UDim2.new(0.05, 0, 0.05, 0)
+hitboxBtn.Size = UDim2.new(0.9, 0, 0, 30)
+hitboxBtn.Position = UDim2.new(0.05, 0, 0, 0)
 hitboxBtn.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
 hitboxBtn.Text = "HITBOX EXPANDER: OFF"
 hitboxBtn.TextColor3 = Color3.new(1, 1, 1)
 hitboxBtn.Font = Enum.Font.GothamBold
 Instance.new("UICorner", hitboxBtn)
 
--- --- LOGICA NAVEGACION ---
-btnMain.MouseButton1Click:Connect(function()
-	pageMain.Visible = true; pageHitbox.Visible = false
-	indicator:TweenPosition(UDim2.new(0.05, 0, 0.9, 0), "Out", "Quad", 0.2)
+local sizeLabel = Instance.new("TextLabel", pageHitbox)
+sizeLabel.Size = UDim2.new(0.9, 0, 0, 20)
+sizeLabel.Position = UDim2.new(0.05, 0, 0, 35)
+sizeLabel.BackgroundTransparency = 1
+sizeLabel.Text = "MASA DEL HITBOX: 5.0"
+sizeLabel.TextColor3 = Color3.new(0.8, 0.8, 0.8)
+sizeLabel.Font = Enum.Font.Gotham
+sizeLabel.TextSize = 10
+
+local sliderBarHit = Instance.new("Frame", pageHitbox)
+sliderBarHit.Size = UDim2.new(0.8, 0, 0, 4)
+sliderBarHit.Position = UDim2.new(0.1, 0, 0, 55)
+sliderBarHit.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+
+local sliderDotHit = Instance.new("TextButton", sliderBarHit)
+sliderDotHit.Size = UDim2.new(0, 12, 0, 12)
+sliderDotHit.Position = UDim2.new(0.05, -6, 0.5, -6) 
+sliderDotHit.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
+sliderDotHit.Text = ""
+Instance.new("UICorner", sliderDotHit).CornerRadius = UDim.new(1, 0)
+
+local transLabel = Instance.new("TextLabel", pageHitbox)
+transLabel.Size = UDim2.new(0.9, 0, 0, 20)
+transLabel.Position = UDim2.new(0.05, 0, 0, 70)
+transLabel.BackgroundTransparency = 1
+transLabel.Text = "TRANSPARENCIA: 0.6"
+transLabel.TextColor3 = Color3.new(0.8, 0.8, 0.8)
+transLabel.Font = Enum.Font.Gotham
+transLabel.TextSize = 10
+
+local sliderBarTrans = Instance.new("Frame", pageHitbox)
+sliderBarTrans.Size = UDim2.new(0.8, 0, 0, 4)
+sliderBarTrans.Position = UDim2.new(0.1, 0, 0, 90)
+sliderBarTrans.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+
+local sliderDotTrans = Instance.new("TextButton", sliderBarTrans)
+sliderDotTrans.Size = UDim2.new(0, 12, 0, 12)
+sliderDotTrans.Position = UDim2.new(0.6, -6, 0.5, -6) 
+sliderDotTrans.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
+sliderDotTrans.Text = ""
+Instance.new("UICorner", sliderDotTrans).CornerRadius = UDim.new(1, 0)
+
+-- --- COMPONENTES COMBAT ---
+local recoilBtn = Instance.new("TextButton", pageCombat)
+recoilBtn.Size = UDim2.new(0.9, 0, 0, 35)
+recoilBtn.Position = UDim2.new(0.05, 0, 0, 10)
+recoilBtn.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+recoilBtn.Text = "NO RECOIL: OFF"
+recoilBtn.TextColor3 = Color3.new(1, 1, 1)
+recoilBtn.Font = Enum.Font.GothamBold
+Instance.new("UICorner", recoilBtn)
+
+local rapidBtn = Instance.new("TextButton", pageCombat)
+rapidBtn.Size = UDim2.new(0.9, 0, 0, 35)
+rapidBtn.Position = UDim2.new(0.05, 0, 0, 50)
+rapidBtn.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+rapidBtn.Text = "NO COOLDOWN: OFF"
+rapidBtn.TextColor3 = Color3.new(1, 1, 1)
+rapidBtn.Font = Enum.Font.GothamBold
+Instance.new("UICorner", rapidBtn)
+
+local rachaInput = Instance.new("TextBox", pageCombat)
+rachaInput.Size = UDim2.new(0.43, 0, 0, 35)
+rachaInput.Position = UDim2.new(0.05, 0, 0, 95)
+rachaInput.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+rachaInput.PlaceholderText = "CANTIDAD"
+rachaInput.Text = ""
+rachaInput.TextColor3 = Color3.new(1, 1, 1)
+rachaInput.Font = Enum.Font.GothamBold
+rachaInput.TextSize = 12
+Instance.new("UICorner", rachaInput)
+
+local setRachaBtn = Instance.new("TextButton", pageCombat)
+setRachaBtn.Size = UDim2.new(0.43, 0, 0, 35)
+setRachaBtn.Position = UDim2.new(0.52, 0, 0, 95)
+setRachaBtn.BackgroundColor3 = Color3.fromRGB(0, 120, 255)
+setRachaBtn.Text = "SET RACHA"
+setRachaBtn.TextColor3 = Color3.new(1, 1, 1)
+setRachaBtn.Font = Enum.Font.GothamBold
+Instance.new("UICorner", setRachaBtn)
+
+-- --- COMPONENTES VISION ---
+local skeletonBtn = Instance.new("TextButton", pageVision)
+skeletonBtn.Size = UDim2.new(0.9, 0, 0, 35)
+skeletonBtn.Position = UDim2.new(0.05, 0, 0, 10)
+skeletonBtn.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+skeletonBtn.Text = "SKELETONS: OFF"
+skeletonBtn.TextColor3 = Color3.new(1, 1, 1)
+skeletonBtn.Font = Enum.Font.GothamBold
+Instance.new("UICorner", skeletonBtn)
+
+local xrayBtn = Instance.new("TextButton", pageVision)
+xrayBtn.Size = UDim2.new(0.9, 0, 0, 35)
+xrayBtn.Position = UDim2.new(0.05, 0, 0, 55)
+xrayBtn.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+xrayBtn.Text = "X-RAY VISION: OFF"
+xrayBtn.TextColor3 = Color3.new(1, 1, 1)
+xrayBtn.Font = Enum.Font.GothamBold
+Instance.new("UICorner", xrayBtn)
+
+local lightBtn = Instance.new("TextButton", pageVision)
+lightBtn.Size = UDim2.new(0.9, 0, 0, 35)
+lightBtn.Position = UDim2.new(0.05, 0, 0, 100)
+lightBtn.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+lightBtn.Text = "FULLBRIGHT: OFF"
+lightBtn.TextColor3 = Color3.new(1, 1, 1)
+lightBtn.Font = Enum.Font.GothamBold
+Instance.new("UICorner", lightBtn)
+
+-- --- LOGICA BOTONES ---
+
+wallCheckBtn.MouseButton1Click:Connect(function()
+    wallCheckEnabled = not wallCheckEnabled
+    wallCheckBtn.Text = wallCheckEnabled and "WALL CHECK: ON" or "WALL CHECK: OFF"
+    wallCheckBtn.BackgroundColor3 = wallCheckEnabled and Color3.fromRGB(0, 255, 100) or Color3.fromRGB(25, 25, 25)
 end)
-btnHitbox.MouseButton1Click:Connect(function()
-	pageMain.Visible = false; pageHitbox.Visible = true
-	indicator:TweenPosition(UDim2.new(0.55, 0, 0.9, 0), "Out", "Quad", 0.2)
+
+setRachaBtn.MouseButton1Click:Connect(function()
+    local rachaVal = tonumber(rachaInput.Text)
+    if not rachaVal then
+        setRachaBtn.Text = "ERROR: NUM"
+        task.wait(1)
+        setRachaBtn.Text = "SET RACHA"
+        return
+    end
+    local remote = game:GetService("ReplicatedStorage"):FindFirstChild("InsertGame", true)
+    if remote and remote:IsA("RemoteEvent") then
+        remote:FireServer(rachaVal)
+        setRachaBtn.Text = "ENVIADO!"
+        task.wait(1)
+        setRachaBtn.Text = "SET RACHA"
+    else
+        setRachaBtn.Text = "NO REMOTE"
+        task.wait(1)
+        setRachaBtn.Text = "SET RACHA"
+    end
 end)
 
--- --- LOGICA SLIDER ---
-local draggingSlider = false
-sliderDot.MouseButton1Down:Connect(function() draggingSlider = true end)
-UserInputService.InputEnded:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 then draggingSlider = false end end)
-UserInputService.InputChanged:Connect(function(input)
-	if draggingSlider and input.UserInputType == Enum.UserInputType.MouseMovement then
-		local percent = math.clamp((UserInputService:GetMouseLocation().X - sliderBar.AbsolutePosition.X) / sliderBar.AbsoluteSize.X, 0, 1)
-		sliderDot.Position = UDim2.new(percent, -7, 0.5, -7)
-		fuerzaMagneto = percent * 0.5
-		strengthLabel.Text = string.format("FUERZA AIM: %.2f", fuerzaMagneto)
-	end
+modeBtn.MouseButton1Click:Connect(function()
+    aimMode = (aimMode == "CAMARA") and "CURSOR" or "CAMARA"
+    modeBtn.Text = "MODO: " .. aimMode
 end)
 
--- --- LOGICA SHIFT LOCK ---
-local function toggleShiftLock()
-	shiftLockEnabled = not shiftLockEnabled
-	shiftLockBtn.Text = shiftLockEnabled and "SHIFT LOCK [0]: ON" or "SHIFT LOCK [0]: OFF"
-	shiftLockBtn.BackgroundColor3 = shiftLockEnabled and Color3.fromRGB(0, 140, 255) or Color3.fromRGB(25, 25, 25)
-	
-	if not shiftLockEnabled then
-		UserInputService.MouseBehavior = Enum.MouseBehavior.Default
-	end
-end
-shiftLockBtn.MouseButton1Click:Connect(toggleShiftLock)
-
-UserInputService.InputBegan:Connect(function(i, g)
-	if not g and (i.KeyCode == Enum.KeyCode.Zero or i.KeyCode == Enum.KeyCode.KeypadZero) then toggleShiftLock() end
-	if not g and i.UserInputType == Enum.UserInputType.MouseButton2 then aimActive = true end
+aimbotBtn.MouseButton1Click:Connect(function()
+    aimbotEnabled = not aimbotEnabled; aimActive = false
+    aimbotBtn.Text = aimbotEnabled and "AIMBOT: ON" or "AIMBOT: OFF"
+    aimbotBtn.BackgroundColor3 = aimbotEnabled and Color3.fromRGB(0, 170, 255) or Color3.fromRGB(25, 25, 25)
 end)
-UserInputService.InputEnded:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton2 then aimActive = false end end)
 
--- --- BUCLE DE RENDERIZADO ---
-RunService.RenderStepped:Connect(function()
-	if shiftLockEnabled then
-		UserInputService.MouseBehavior = Enum.MouseBehavior.LockCenter
-	end
+bindBtn.MouseButton1Click:Connect(function() isBinding = true; bindBtn.Text = "..." end)
 
-	-- Skeletons/X-Ray
-	if skeletonsEnabled then
-		local rainbow = Color3.fromHSV(tick() % 5 / 5, 1, 1)
-		for _, p in pairs(Players:GetPlayers()) do
-			if p ~= LocalPlayer and p.Character then
-				local hi = p.Character:FindFirstChild("AuraHighlight") or Instance.new("Highlight", p.Character)
-				hi.Name = "AuraHighlight"
-				hi.FillColor = rainbow
-				hi.OutlineColor = rainbow
-				hi.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
-			end
-		end
-	end
+hitboxBtn.MouseButton1Click:Connect(function()
+    hitboxEnabled = not hitboxEnabled
+    hitboxBtn.Text = hitboxEnabled and "HITBOX: ON" or "HITBOX: OFF"
+    hitboxBtn.BackgroundColor3 = hitboxEnabled and Color3.fromRGB(0, 170, 255) or Color3.fromRGB(25, 25, 25)
+end)
 
-	-- Hitbox Expander (TORSO EXPANDIDO)
-	for _, p in pairs(Players:GetPlayers()) do
-		if p ~= LocalPlayer and p.Character then
-			local torso = p.Character:FindFirstChild("UpperTorso") or p.Character:FindFirstChild("Torso")
-			if torso then
-				if hitboxEnabled then
-					torso.Size = Vector3.new(hitboxSize, hitboxSize, hitboxSize)
-					torso.Transparency = 0.6
-					torso.Color = Color3.fromRGB(0, 170, 255) -- Color Aura Company
-					torso.CanCollide = false
-				else
-					torso.Size = (p.Character:FindFirstChild("UpperTorso")) and Vector3.new(1.6, 1.6, 1) or Vector3.new(2, 2, 1)
-					torso.Transparency = 0
-				end
-			end
-		end
-	end
+recoilBtn.MouseButton1Click:Connect(function()
+    noRecoilEnabled = not noRecoilEnabled
+    recoilBtn.Text = noRecoilEnabled and "NO RECOIL: ON" or "NO RECOIL: OFF"
+    recoilBtn.BackgroundColor3 = noRecoilEnabled and Color3.fromRGB(255, 85, 0) or Color3.fromRGB(25, 25, 25)
+end)
 
-	-- Aim Assist
-	if aimActive then
-		local target = nil
-		local shortestDist = radioDeteccion
-		for _, p in pairs(Players:GetPlayers()) do
-			if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("Humanoid") and p.Character.Humanoid.Health > 0 then
-				local part = p.Character:FindFirstChild(parteObjetivo)
-				if part then
-					local pos, onScreen = Camera:WorldToViewportPoint(part.Position)
-					if onScreen then
-						local dist = (Vector2.new(pos.X, pos.Y) - Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2)).Magnitude
-						if dist < shortestDist then target = part shortestDist = dist end
-					end
-				end
-			end
-		end
-		if target then Camera.CFrame = Camera.CFrame:Lerp(CFrame.new(Camera.CFrame.Position, target.Position), fuerzaMagneto) end
-	end
+rapidBtn.MouseButton1Click:Connect(function()
+    rapidFireEnabled = not rapidFireEnabled
+    rapidBtn.Text = rapidFireEnabled and "RAPID FIRE: ON" or "NO COOLDOWN: OFF"
+    rapidBtn.BackgroundColor3 = rapidFireEnabled and Color3.fromRGB(255, 0, 100) or Color3.fromRGB(25, 25, 25)
 end)
 
 skeletonBtn.MouseButton1Click:Connect(function()
-	skeletonsEnabled = not skeletonsEnabled
-	skeletonBtn.Text = skeletonsEnabled and "SKELETONS: ON" or "SKELETONS: OFF"
-	skeletonBtn.BackgroundColor3 = skeletonsEnabled and Color3.fromRGB(0, 200, 100) or Color3.fromRGB(25, 25, 25)
-	if not skeletonsEnabled then
-		for _, p in pairs(Players:GetPlayers()) do
-			if p.Character and p.Character:FindFirstChild("AuraHighlight") then p.Character.AuraHighlight:Destroy() end
-		end
-	end
+    skeletonsEnabled = not skeletonsEnabled
+    skeletonBtn.Text = skeletonsEnabled and "SKELETONS: ON" or "SKELETONS: OFF"
+    skeletonBtn.BackgroundColor3 = skeletonsEnabled and Color3.fromRGB(0, 200, 100) or Color3.fromRGB(25, 25, 25)
+    if not skeletonsEnabled then for _, p in pairs(Players:GetPlayers()) do if p.Character and p.Character:FindFirstChild("AuraHighlight") then p.Character.AuraHighlight:Destroy() end end end
 end)
 
-hitboxBtn.MouseButton1Click:Connect(function()
-	hitboxEnabled = not hitboxEnabled
-	hitboxBtn.Text = hitboxEnabled and "HITBOX EXPANDER: ON" or "HITBOX EXPANDER: OFF"
-	hitboxBtn.BackgroundColor3 = hitboxEnabled and Color3.fromRGB(0, 170, 255) or Color3.fromRGB(25, 25, 25)
+xrayBtn.MouseButton1Click:Connect(function()
+    xrayEnabled = not xrayEnabled
+    xrayBtn.Text = xrayEnabled and "X-RAY: ON" or "X-RAY VISION: OFF"
+    xrayBtn.BackgroundColor3 = xrayEnabled and Color3.fromRGB(170, 0, 255) or Color3.fromRGB(25, 25, 25)
+    for _, part in pairs(workspace:GetDescendants()) do
+        if part:IsA("BasePart") and not part:IsDescendantOf(LocalPlayer.Character) then
+            if xrayEnabled then
+                if not part:FindFirstChild("OriginalTrans") then
+                    local val = Instance.new("NumberValue", part); val.Name = "OriginalTrans"; val.Value = part.Transparency
+                end
+                part.Transparency = 0.5
+            else
+                if part:FindFirstChild("OriginalTrans") then part.Transparency = part.OriginalTrans.Value end
+            end
+        end
+    end
 end)
 
--- Draggable
+lightBtn.MouseButton1Click:Connect(function()
+    fullBrightEnabled = not fullBrightEnabled
+    lightBtn.Text = fullBrightEnabled and "LIGHT: ON" or "FULLBRIGHT: OFF"
+    lightBtn.BackgroundColor3 = fullBrightEnabled and Color3.fromRGB(255, 255, 0) or Color3.fromRGB(25, 25, 25)
+end)
+
+-- --- LOGICA SLIDERS ---
+local draggingAim, draggingHit, draggingTrans = false, false, false
+sliderDotAim.MouseButton1Down:Connect(function() draggingAim = true end)
+sliderDotHit.MouseButton1Down:Connect(function() draggingHit = true end)
+sliderDotTrans.MouseButton1Down:Connect(function() draggingTrans = true end)
+
+UserInputService.InputEnded:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 then draggingAim, draggingHit, draggingTrans = false, false, false end end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement then
+        if draggingAim then
+            local percent = math.clamp((UserInputService:GetMouseLocation().X - sliderBarAim.AbsolutePosition.X) / sliderBarAim.AbsoluteSize.X, 0, 1)
+            sliderDotAim.Position = UDim2.new(percent, -6, 0.5, -6); fuerzaMagneto = percent * 0.5
+            strengthLabel.Text = string.format("FUERZA AIM: %.2f", fuerzaMagneto)
+        elseif draggingHit then
+            local percent = math.clamp((UserInputService:GetMouseLocation().X - sliderBarHit.AbsolutePosition.X) / sliderBarHit.AbsoluteSize.X, 0, 1)
+            sliderDotHit.Position = UDim2.new(percent, -6, 0.5, -6)
+            hitboxSize = 2 + (percent * 98) 
+            sizeLabel.Text = string.format("MASA DEL HITBOX: %.1f", hitboxSize)
+        elseif draggingTrans then
+            local percent = math.clamp((UserInputService:GetMouseLocation().X - sliderBarTrans.AbsolutePosition.X) / sliderBarTrans.AbsoluteSize.X, 0, 1)
+            sliderDotTrans.Position = UDim2.new(percent, -6, 0.5, -6)
+            hitboxTransparency = percent
+            transLabel.Text = string.format("TRANSPARENCIA: %.1f", hitboxTransparency)
+        end
+    end
+end)
+
+-- --- FUNCION WALL CHECK ---
+local function isVisible(part)
+    local castPoints = {Camera.CFrame.Position, part.Position}
+    local ignoreList = {LocalPlayer.Character, part.Parent}
+    local params = RaycastParams.new()
+    params.FilterType = Enum.RaycastFilterType.Exclude
+    params.FilterDescendantsInstances = ignoreList
+    
+    local ray = workspace:Raycast(castPoints[1], castPoints[2] - castPoints[1], params)
+    if ray and ray.Instance then
+        return false
+    end
+    return true
+end
+
+-- --- BUCLE DE RENDERIZADO ---
+RunService.RenderStepped:Connect(function()
+    if shiftLockEnabled then UserInputService.MouseBehavior = Enum.MouseBehavior.LockCenter end
+    if fullBrightEnabled then Lighting.Brightness = 2; Lighting.ClockTime = 14; Lighting.FogEnd = 100000; Lighting.GlobalShadows = false end
+
+    -- Logica Visual Esqueletos
+    for _, p in pairs(Players:GetPlayers()) do
+        if p ~= LocalPlayer and p.Character then
+            local hi = p.Character:FindFirstChild("AuraHighlight")
+            if skeletonsEnabled and not streamerMode then
+                if not hi then hi = Instance.new("Highlight", p.Character); hi.Name = "AuraHighlight" end
+                hi.Enabled = true
+                hi.FillColor = Color3.fromHSV(tick() % 5 / 5, 1, 1); hi.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+            else
+                if hi then hi.Enabled = false end
+            end
+        end
+    end
+
+    -- --- LOGICA HITBOX (CORREGIDA PARA MODO STREAMER) ---
+    for _, p in pairs(Players:GetPlayers()) do
+        if p ~= LocalPlayer and p.Character then
+            local torso = p.Character:FindFirstChild("UpperTorso") or p.Character:FindFirstChild("Torso")
+            if torso and p.Character:FindFirstChild("Humanoid") then
+                if streamerMode then
+                    -- Si el modo streamer esta ON, restauramos apariencia visual pero mantenemos el hit si esta ON (opcional)
+                    -- En este caso, forzamos invisibilidad y tamaño normal para que no se note NADA.
+                    if torso.Size.X > 2.1 or torso.Transparency ~= 0 then
+                        torso.Size = (p.Character:FindFirstChild("UpperTorso")) and Vector3.new(1.6, 1.6, 1) or Vector3.new(2, 2, 1)
+                        torso.Transparency = 0
+                    end
+                elseif hitboxEnabled then
+                    -- Modo Normal: Hitbox Activo
+                    torso.Size = Vector3.new(hitboxSize, hitboxSize, hitboxSize)
+                    torso.Transparency = hitboxTransparency
+                    torso.Color = Color3.fromRGB(0, 170, 255)
+                    torso.CanCollide = false
+                    torso.Massless = true
+                else
+                    -- Modo Normal: Hitbox Apagado
+                    if torso.Size.X > 2.1 then 
+                        torso.Size = (p.Character:FindFirstChild("UpperTorso")) and Vector3.new(1.6, 1.6, 1) or Vector3.new(2, 2, 1)
+                        torso.Transparency = 0 
+                        torso.Massless = false 
+                    end
+                end
+            end
+        end
+    end
+
+    if noRecoilEnabled or rapidFireEnabled then
+        for _, v in pairs(LocalPlayer.Character:GetDescendants()) do
+            if v:IsA("NumberValue") then
+                if noRecoilEnabled and v.Name:find("Recoil") then v.Value = 0 end
+                if rapidFireEnabled and (v.Name:find("Delay") or v.Name:find("Cooldown")) then v.Value = 0 end
+            end
+        end
+    end
+
+    -- Logica Aimbot
+    if aimActive and aimbotEnabled then
+        local target = nil; local shortestDist = radioDeteccion
+        for _, p in pairs(Players:GetPlayers()) do
+            if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("Humanoid") and p.Character.Humanoid.Health > 0 then
+                local part = p.Character:FindFirstChild(parteObjetivo)
+                if part then
+                    if wallCheckEnabled and not isVisible(part) then continue end
+                    
+                    local pos, onScreen = Camera:WorldToViewportPoint(part.Position)
+                    if onScreen then
+                        local dist = (Vector2.new(pos.X, pos.Y) - Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2)).Magnitude
+                        if dist < shortestDist then target = {Part = part, ScreenPos = pos} shortestDist = dist end
+                    end
+                end
+            end
+        end
+        if target then 
+            if aimMode == "CAMARA" then Camera.CFrame = Camera.CFrame:Lerp(CFrame.new(Camera.CFrame.Position, target.Part.Position), fuerzaMagneto) 
+            else
+                local mousePos = UserInputService:GetMouseLocation()
+                local moveVector = (Vector2.new(target.ScreenPos.X, target.ScreenPos.Y) - mousePos) * fuerzaMagneto
+                if mousemoverel then mousemoverel(moveVector.X, moveVector.Y) end
+            end
+        end
+    end
+end)
+
+-- --- CONEXIONES PESTAÑAS ---
+btnMain.MouseButton1Click:Connect(function()
+    pageMain.Visible = true; pageHitbox.Visible = false; pageCombat.Visible = false; pageVision.Visible = false
+    indicator:TweenPosition(UDim2.new(0.025, 0, 0.9, 0), "Out", "Quad", 0.2)
+end)
+btnHitbox.MouseButton1Click:Connect(function()
+    pageMain.Visible = false; pageHitbox.Visible = true; pageCombat.Visible = false; pageVision.Visible = false
+    indicator:TweenPosition(UDim2.new(0.275, 0, 0.9, 0), "Out", "Quad", 0.2)
+end)
+btnCombat.MouseButton1Click:Connect(function()
+    pageMain.Visible = false; pageHitbox.Visible = false; pageCombat.Visible = true; pageVision.Visible = false
+    indicator:TweenPosition(UDim2.new(0.525, 0, 0.9, 0), "Out", "Quad", 0.2)
+end)
+btnVision.MouseButton1Click:Connect(function()
+    pageMain.Visible = false; pageHitbox.Visible = false; pageCombat.Visible = false; pageVision.Visible = true
+    indicator:TweenPosition(UDim2.new(0.775, 0, 0.9, 0), "Out", "Quad", 0.2)
+end)
+
+UserInputService.InputBegan:Connect(function(i, g)
+    if g then return end
+    
+    -- MODO STREAMER (TECLA L)
+    if i.KeyCode == Enum.KeyCode.L then
+        streamerMode = not streamerMode
+        mainFrame.Visible = not streamerMode
+    end
+
+    if isBinding and i.UserInputType == Enum.UserInputType.Keyboard then
+        aimbotBind = i.KeyCode; bindBtn.Text = "BIND: " .. i.KeyCode.Name; isBinding = false; return
+    end
+    if i.KeyCode == aimbotBind and aimbotEnabled then
+        aimActive = not aimActive; aimbotBtn.Text = aimActive and "AIMBOT: ACTIVE" or "AIMBOT: ON"
+        aimbotBtn.BackgroundColor3 = aimActive and Color3.fromRGB(255, 50, 50) or Color3.fromRGB(0, 170, 255)
+    end
+end)
+
+-- --- DRAG ---
 local dFrame, dStart, sPos
-mainFrame.InputBegan:Connect(function(i) 
-	if i.UserInputType == Enum.UserInputType.MouseButton1 and not draggingSlider then 
-		dFrame = true dStart = i.Position sPos = mainFrame.Position 
-	end 
+mainFrame.InputBegan:Connect(function(i)
+    if i.UserInputType == Enum.UserInputType.MouseButton1 and not (draggingAim or draggingHit or draggingTrans) then
+        dFrame = true dStart = i.Position sPos = mainFrame.Position
+    end
 end)
-UserInputService.InputChanged:Connect(function(i) 
-	if dFrame and i.UserInputType == Enum.UserInputType.MouseMovement then
-		local delta = i.Position - dStart
-		mainFrame.Position = UDim2.new(sPos.X.Scale, sPos.X.Offset + delta.X, sPos.Y.Scale, sPos.Y.Offset + delta.Y)
-	end 
+UserInputService.InputChanged:Connect(function(i)
+    if dFrame and i.UserInputType == Enum.UserInputType.MouseMovement then
+        local delta = i.Position - dStart
+        mainFrame.Position = UDim2.new(sPos.X.Scale, sPos.X.Offset + delta.X, sPos.Y.Scale, sPos.Y.Offset + delta.Y)
+    end
 end)
-UserInputService.InputEnded:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 then dFrame = false end end)
+UserInputService.InputEnded:Connect(function(i)
+    if i.UserInputType == Enum.UserInputType.MouseButton1 then dFrame = false end
+end)
