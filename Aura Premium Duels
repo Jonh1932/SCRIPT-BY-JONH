@@ -13,8 +13,8 @@ local shiftLockEnabled = false
 local hitboxEnabled = false
 local xrayEnabled = false
 local fullBrightEnabled = false
-local wallCheckEnabled = false 
-local streamerMode = true -- Iniciamos en True para que el panel esté oculto al entrar
+local wallCheckEnabled = true -- ACTUALIZADO: Activo por defecto
+local streamerMode = true -- Panel oculto al iniciar
 local fuerzaMagneto = 0.15 
 local radioDeteccion = 500 
 local parteObjetivo = "UpperTorso" 
@@ -22,7 +22,7 @@ local hitboxSize = 5
 local hitboxTransparency = 0.6 
 local aimbotBind = Enum.KeyCode.Q 
 local isBinding = false
-local aimMode = "CAMARA" 
+local aimMode = "CURSOR" -- Modo Cursor por defecto
 
 local noRecoilEnabled = false
 local rapidFireEnabled = false
@@ -37,7 +37,7 @@ local mainFrame = Instance.new("Frame")
 mainFrame.Size = UDim2.new(0, 260, 0, 310) 
 mainFrame.Position = UDim2.new(0.5, -130, 0.5, -155)
 mainFrame.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
-mainFrame.Visible = false -- El panel inicia oculto visualmente
+mainFrame.Visible = false -- Oculto al iniciar
 mainFrame.Parent = screenGui
 Instance.new("UICorner", mainFrame).CornerRadius = UDim.new(0, 10)
 
@@ -106,8 +106,8 @@ Instance.new("UICorner", aimbotBtn)
 local wallCheckBtn = Instance.new("TextButton", pageMain)
 wallCheckBtn.Size = UDim2.new(0.9, 0, 0, 30)
 wallCheckBtn.Position = UDim2.new(0.05, 0, 0, 35)
-wallCheckBtn.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-wallCheckBtn.Text = "WALL CHECK: OFF"
+wallCheckBtn.BackgroundColor3 = Color3.fromRGB(0, 255, 100) -- Color verde por defecto
+wallCheckBtn.Text = "WALL CHECK: ON"
 wallCheckBtn.TextColor3 = Color3.new(1, 1, 1)
 wallCheckBtn.Font = Enum.Font.GothamBold
 Instance.new("UICorner", wallCheckBtn)
