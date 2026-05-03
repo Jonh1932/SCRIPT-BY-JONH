@@ -424,27 +424,27 @@ RunService.RenderStepped:Connect(function()
         end
     end
 
-    -- --- LOGICA HITBOX (CORREGIDA PARA MODO STREAMER) ---
+    -- --- LOGICA HITBOX (AHORA FUNCIONA INVISIBLE EN MODO STREAMER) ---
     for _, p in pairs(Players:GetPlayers()) do
         if p ~= LocalPlayer and p.Character then
             local torso = p.Character:FindFirstChild("UpperTorso") or p.Character:FindFirstChild("Torso")
             if torso and p.Character:FindFirstChild("Humanoid") then
-                if streamerMode then
-                    -- Si el modo streamer esta ON, restauramos apariencia visual pero mantenemos el hit si esta ON (opcional)
-                    -- En este caso, forzamos invisibilidad y tamaño normal para que no se note NADA.
-                    if torso.Size.X > 2.1 or torso.Transparency ~= 0 then
-                        torso.Size = (p.Character:FindFirstChild("UpperTorso")) and Vector3.new(1.6, 1.6, 1) or Vector3.new(2, 2, 1)
-                        torso.Transparency = 0
-                    end
-                elseif hitboxEnabled then
-                    -- Modo Normal: Hitbox Activo
+                if hitboxEnabled then
+                    -- Si Hitbox está ON: Siempre mantenemos el tamaño "Gordo"
                     torso.Size = Vector3.new(hitboxSize, hitboxSize, hitboxSize)
-                    torso.Transparency = hitboxTransparency
-                    torso.Color = Color3.fromRGB(0, 170, 255)
                     torso.CanCollide = false
                     torso.Massless = true
+                    
+                    if streamerMode then
+                        -- En modo streamer: Tamaño gordo pero TRANSPARENCIA TOTAL (No se ve nada)
+                        torso.Transparency = 1
+                    else
+                        -- En modo normal: Tamaño gordo y color azul/transparencia elegida
+                        torso.Transparency = hitboxTransparency
+                        torso.Color = Color3.fromRGB(0, 170, 255)
+                    end
                 else
-                    -- Modo Normal: Hitbox Apagado
+                    -- Si Hitbox está OFF: Restauramos a la normalidad absoluta
                     if torso.Size.X > 2.1 then 
                         torso.Size = (p.Character:FindFirstChild("UpperTorso")) and Vector3.new(1.6, 1.6, 1) or Vector3.new(2, 2, 1)
                         torso.Transparency = 0 
